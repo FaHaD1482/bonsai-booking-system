@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import supabase from '../services/supabaseClient';
 import { User } from '../types';
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'shifat@bonsai.com';
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
 const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
