@@ -17,7 +17,7 @@ const Bookings: React.FC = () => {
     <div className="space-y-6 sm:space-y-8 px-3 sm:px-6">
       {/* Page Header */}
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 sm:p-8 border border-emerald-200">
-        <img src="../../src/assets/bonsai.png" alt="Bonsai Eco Village" className="mx-auto mb-4 w-25 h-20" />
+        <img src="/assets/bonsai.png" alt="Bonsai Eco Village" className="mx-auto mb-4 w-25 h-20" />
         <h1 className="text-xl sm:text-4xl font-bold text-emerald-900 mb-2 text-center">Room Booking Portal</h1>
       </div>
 
