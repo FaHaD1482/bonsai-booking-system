@@ -4,9 +4,15 @@
   "installCommand": "npm install",
   "framework": "vite",
   "regions": ["iad"],
-  "env": [
-    "VITE_SUPABASE_URL",
-    "VITE_SUPABASE_ANON_KEY",
-    "VITE_ADMIN_EMAIL"
-  ]
+  "env": {
+    "VITE_SUPABASE_URL": {
+      "description": "Supabase project URL"
+    },
+    "VITE_SUPABASE_ANON_KEY": {
+      "description": "Supabase anonymous public key"
+    },
+    "VITE_ADMIN_EMAIL": {
+      "description": "Admin email address"
+    }
+  }
 }
