@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    @apply transition-colors duration-200;
+}
+
+body {
+    @apply bg-base-100 text-base-content;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+}
+
+a {
+    @apply link link-hover;
+}
+
+.scrollable-timeline {
+    @apply overflow-x-auto pb-4;
+}
+
+.stat-card {
+    @apply card bg-base-200 shadow-md;
+}
+
+.conflict-alert {
+    @apply alert alert-error shadow-lg;
+}
+
+.success-alert {
+    @apply alert alert-success shadow-lg;
+}
