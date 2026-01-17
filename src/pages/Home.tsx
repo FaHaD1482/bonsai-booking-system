@@ -63,7 +63,7 @@ const Home: React.FC = () => {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <div className="w-35 h-35 flex items-center justify-center">
-              <img src="../src/assets/bonsai.png" alt="Bonsai Logo" className="w-16 h-12" />
+              <img src="../../src/assets/bonsai.png" alt="Bonsai Logo" className="w-16 h-12" />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-emerald-900">Bonsai Booking Portal</h1>
