@@ -27,19 +27,21 @@ ALTER COLUMN status TYPE VARCHAR(20);
 CREATE TABLE IF NOT EXISTS refund_policies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   policy_name VARCHAR(100) NOT NULL UNIQUE,
-  days_before_checkin INTEGER NOT NULL,
-  refund_percentage NUMERIC(5, 2) NOT NULL,
+  days_before_checkin INTEGER,
+  refund_percentage NUMERIC(5, 2),
   description TEXT,
+  is_custom BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert default refund policies
-INSERT INTO refund_policies (policy_name, days_before_checkin, refund_percentage, description)
+INSERT INTO refund_policies (policy_name, days_before_checkin, refund_percentage, description, is_custom)
 VALUES 
-  ('72-0 Hours', 0, 0, 'Cancelled within 72 hours to check-in: 0% refund'),
-  ('7-3 Days', 3, 50, 'Cancelled between 7 days to 72 hours: 50% refund'),
-  ('7+ Days', 7, 85, 'Cancelled 7 days before check-in: 85% refund')
+  ('72-0 Hours', 0, 0, 'Cancelled within 72 hours to check-in: 0% refund', false),
+  ('7-3 Days', 3, 50, 'Cancelled between 7 days to 72 hours: 50% refund', false),
+  ('7+ Days', 7, 85, 'Cancelled 7 days before check-in: 85% refund', false),
+  ('Custom Refund', NULL, NULL, 'Custom refund amount based on guest negotiation', true)
 ON CONFLICT (policy_name) DO NOTHING;
 
 -- 3. CREATE EXPENSES TABLE
@@ -148,35 +150,28 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to generate booking number
-CREATE OR REPLACE FUNCTION generate_booking_no()
-RETURNS VARCHAR AS $$
-DECLARE
-  booking_no VARCHAR;
-BEGIN
-  booking_no := 'BK' || TO_CHAR(CURRENT_DATE, 'YYYYMM') || LPAD(NEXTVAL('booking_number_seq')::TEXT, 5, '0');
-  RETURN booking_no;
-END;
-$$ LANGUAGE plpgsql;
+-- REMOVED - Booking number will be entered manually by user
+-- CREATE OR REPLACE FUNCTION generate_booking_no()
+-- RETURNS VARCHAR AS $$
+-- DECLARE
+--   booking_no VARCHAR;
+-- BEGIN
+--   booking_no := 'BK' || TO_CHAR(CURRENT_DATE, 'YYYYMM') || LPAD(NEXTVAL('booking_number_seq')::TEXT, 5, '0');
+--   RETURN booking_no;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
 -- Create sequence for booking numbers
-CREATE SEQUENCE IF NOT EXISTS booking_number_seq START 1;
+-- REMOVED - Not needed for manual booking number entry
+-- CREATE SEQUENCE IF NOT EXISTS booking_number_seq START 1;
 
--- 7. CREATE TRIGGER FOR AUTOMATIC BOOKING_NO GENERATION
-CREATE OR REPLACE FUNCTION auto_generate_booking_no()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.booking_no IS NULL THEN
-    NEW.booking_no := generate_booking_no();
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_auto_booking_no ON bookings;
-CREATE TRIGGER trg_auto_booking_no
-BEFORE INSERT ON bookings
-FOR EACH ROW
-EXECUTE FUNCTION auto_generate_booking_no();
+-- 7. REMOVED - Trigger for automatic booking number generation (no longer needed)
+-- The booking_no will be entered manually by the user
+-- DROP TRIGGER IF EXISTS trg_auto_booking_no ON bookings;
+-- CREATE TRIGGER trg_auto_booking_no
+-- BEFORE INSERT ON bookings
+-- FOR EACH ROW
+-- EXECUTE FUNCTION auto_generate_booking_no();
 
 -- ============================================================================
 -- INDEXES FOR PERFORMANCE

@@ -15,6 +15,7 @@ export interface Booking {
   vat_amount: number;
   checkout_payable: number;
   refund_amount: number;
+  custom_refund_amount?: number; // For custom refund negotiations
   remarks?: string;
   guest_count?: number;
   num_adults?: number;
@@ -38,9 +39,10 @@ export interface Expense {
 export interface RefundPolicy {
   id: string;
   policy_name: string;
-  days_before_checkin: number;
-  refund_percentage: number;
+  days_before_checkin?: number; // NULL for custom refund
+  refund_percentage?: number; // NULL for custom refund
   description?: string;
+  is_custom: boolean; // true if this is a custom refund policy
   created_at: string;
   updated_at: string;
 }

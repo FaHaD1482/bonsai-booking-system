@@ -23,8 +23,17 @@ export const calculateCheckoutPayable = (
 export const calculateRefund = (
   bookingPrice: number,
   checkInDate: string,
-  advancePaid: number
+  advancePaid: number,
+  customRefund?: number
 ): { refundAmount: number; policy: string } => {
+  // If custom refund is provided, use it
+  if (customRefund !== undefined && customRefund !== null) {
+    return {
+      refundAmount: Math.round(customRefund * 100) / 100,
+      policy: 'Custom refund amount - Based on guest negotiation'
+    };
+  }
+
   const checkIn = new Date(checkInDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
