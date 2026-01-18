@@ -3,12 +3,12 @@ import { Booking, RefundPolicy } from '../types';
 // VAT Calculation (2.5%)
 export const calculateVAT = (price: number, isApplicable: boolean): number => {
   if (!isApplicable) return 0;
-  return Math.round(price * 0.025 * 100) / 100; // Round to 2 decimals
+  return Math.ceil(price * 0.025 * 100) / 100; // Round to 2 decimals
 };
 
 // Total Price = Price + VAT
 export const calculateTotalPrice = (price: number, vat: number): number => {
-  return Math.round((price + vat) * 100) / 100;
+  return Math.ceil((price + vat) * 100) / 100;
 };
 
 // Checkout Payable = Total Price - Advance

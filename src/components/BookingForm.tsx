@@ -54,7 +54,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
   // Recalculate VAT and totals when price or VAT selection changes
   useEffect(() => {
     const price = parseFloat(formData.price) || 0;
-    const vat = calculateVAT(price, formData.vat_applicable);
+    const vat = Math.ceil(calculateVAT(price, formData.vat_applicable));
     const total = calculateTotalPrice(price, vat);
     const advance = parseFloat(formData.advance) || 0;
     const payable = calculateCheckoutPayable(total, advance);

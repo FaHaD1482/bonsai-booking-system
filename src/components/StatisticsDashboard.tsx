@@ -301,7 +301,7 @@ const StatisticsDashboard: React.FC = () => {
         />
         <StatCard
           icon={stats.profitLoss >= 0 ? <TrendingUp size={40} /> : <TrendingDown size={40} />}
-          title="Profit/Loss"
+          title="Revenue"
           value={`৳ ${(stats.profitLoss)}`}
           color={stats.profitLoss >= 0 ? "from-green-500 to-emerald-600" : "from-red-500 to-rose-600"}
         />
