@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Calendar, User as UserIcon, ExternalLink, TrendingUp } from 'lucide-react';
+import { LogOut, Calendar, User as UserIcon, ExternalLink, TrendingUp, Settings } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import logo from '../assets/logo.png';
 
@@ -54,6 +54,12 @@ const Navbar: React.FC = () => {
                   <Link to="/expenses" className="gap-2 no-underline hover:no-underline focus:no-underline hover:bg-blue-50 hover:shadow-md transition-all duration-200 rounded-lg">
                     <TrendingUp size={18} className="text-blue-600" />
                     Expenses & Revenue
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/profile" className="gap-2 no-underline hover:no-underline focus:no-underline hover:bg-purple-50 hover:shadow-md transition-all duration-200 rounded-lg">
+                    <Settings size={18} className="text-purple-600" />
+                    Profile Settings
                   </Link>
                 </li>
                 <li>
