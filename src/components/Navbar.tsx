@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Calendar, User as UserIcon, ExternalLink } from 'lucide-react';
+import { LogOut, Calendar, User as UserIcon, ExternalLink, TrendingUp } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import logo from '../assets/logo.png';
 
@@ -48,6 +48,12 @@ const Navbar: React.FC = () => {
                   <Link to="/bookings" className="gap-2 no-underline hover:no-underline focus:no-underline hover:bg-emerald-50 hover:shadow-md transition-all duration-200 rounded-lg">
                     <Calendar size={18} className="text-emerald-600" />
                     Manage Bookings
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/expenses" className="gap-2 no-underline hover:no-underline focus:no-underline hover:bg-blue-50 hover:shadow-md transition-all duration-200 rounded-lg">
+                    <TrendingUp size={18} className="text-blue-600" />
+                    Expenses & Revenue
                   </Link>
                 </li>
                 <li>

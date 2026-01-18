@@ -78,3 +78,5 @@ export interface ConflictCheckResult {
   hasConflict: boolean;
   conflictingBooking?: Booking;
 }
+
+export type DateRangeType = 'week' | 'month' | 'custom';

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import supabase from '../services/supabaseClient';
-import { Booking } from '../types';
-import { Users, DollarSign, DoorOpen, Loader, TrendingUp, Calendar } from 'lucide-react';
+import { Booking, Expense } from '../types';
+import { Users, DollarSign, DoorOpen, Loader, TrendingUp, Calendar, TrendingDown } from 'lucide-react';
 
-type DateRangeType = 'week' | 'month' | 'custom';
 
 const StatisticsDashboard: React.FC = () => {
   const [stats, setStats] = useState({
@@ -11,6 +10,11 @@ const StatisticsDashboard: React.FC = () => {
     advanceCollected: 0,
     activeRooms: 0,
     pendingPayment: 0,
+    totalVAT: 0,
+    totalCheckoutPayable: 0,
+    totalRefunds: 0,
+    totalExpenses: 0,
+    profitLoss: 0,
     monthlyBookings: Array(12).fill(0),
   });
   const [loading, setLoading] = useState(true);
@@ -53,28 +57,49 @@ const StatisticsDashboard: React.FC = () => {
 
       console.log('📅 Date range:', startDate.toISOString().split('T')[0], 'to', endDate.toISOString().split('T')[0]);
 
-      const { data, error } = await supabase
+      // Fetch bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select('*')
         .gte('check_in', startDate.toISOString().split('T')[0])
         .lte('check_in', endDate.toISOString().split('T')[0]);
 
-      if (error) {
-        console.error('❌ Fetch bookings error:', error);
-        throw error;
+      if (bookingsError) {
+        console.error('❌ Fetch bookings error:', bookingsError);
+        throw bookingsError;
       }
 
-      console.log('✅ Fetched bookings:', data?.length || 0, 'records');
+      // Fetch expenses
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*')
+        .gte('expense_date', startDate.toISOString().split('T')[0])
+        .lte('expense_date', endDate.toISOString().split('T')[0]);
 
-      const bookings = data as Booking[];
+      if (expensesError) {
+        console.error('❌ Fetch expenses error:', expensesError);
+        throw expensesError;
+      }
+
+      console.log('✅ Fetched bookings:', bookingsData?.length || 0, 'records');
+      console.log('✅ Fetched expenses:', expensesData?.length || 0, 'records');
+
+      const bookings = (bookingsData || []) as Booking[];
+      const expenses = (expensesData || []) as Expense[];
       const currentNow = new Date();
 
       const totalBookings = bookings.length;
       const advanceCollected = bookings.reduce((sum, b) => sum + (b.advance || 0), 0);
+      const totalVAT = bookings.reduce((sum, b) => sum + (b.vat_amount || 0), 0);
+      const totalCheckoutPayable = bookings.reduce((sum, b) => sum + (b.checkout_payable || 0), 0);
+      const totalRefunds = bookings.reduce((sum, b) => sum + (b.refund_amount || 0), 0);
       
       // Calculate total booking amount and pending
       const totalAmount = bookings.reduce((sum, b) => sum + (b.price || 0), 0);
       const pendingPayment = Math.max(0, totalAmount - advanceCollected);
+
+      // Calculate total expenses
+      const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
       // Count rooms with active bookings (check-in <= now <= check-out)
       const activeRooms = new Set(
@@ -94,13 +119,22 @@ const StatisticsDashboard: React.FC = () => {
         monthlyData[checkInDate.getMonth()]++;
       });
 
-      console.log('📈 Statistics calculated:', { totalBookings, advanceCollected, activeRooms, pendingPayment });
+      // Calculate profit/loss
+      const totalRevenue = totalAmount;
+      const profitLoss = totalRevenue - totalExpenses - totalRefunds;
+
+      console.log('📈 Statistics calculated:', { totalBookings, advanceCollected, activeRooms, pendingPayment, totalVAT, totalRefunds, totalExpenses, profitLoss });
 
       setStats({
         totalBookings,
         advanceCollected,
         activeRooms,
         pendingPayment,
+        totalVAT,
+        totalCheckoutPayable,
+        totalRefunds,
+        totalExpenses,
+        profitLoss,
         monthlyBookings: monthlyData,
       });
     } catch (err) {
@@ -242,6 +276,34 @@ const StatisticsDashboard: React.FC = () => {
           title="Active Rooms"
           value={stats.activeRooms}
           color="from-purple-500 to-pink-600"
+        />
+      </div>
+
+      {/* New Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<DollarSign size={40} />}
+          title="Total VAT"
+          value={`৳ ${(stats.totalVAT)}`}
+          color="from-amber-500 to-orange-600"
+        />
+        <StatCard
+          icon={<TrendingUp size={40} />}
+          title="Total Payable"
+          value={`৳ ${(stats.totalCheckoutPayable)}`}
+          color="from-violet-500 to-purple-600"
+        />
+        <StatCard
+          icon={<TrendingDown size={40} />}
+          title="Total Refunds"
+          value={`৳ ${(stats.totalRefunds)}`}
+          color="from-red-500 to-pink-600"
+        />
+        <StatCard
+          icon={stats.profitLoss >= 0 ? <TrendingUp size={40} /> : <TrendingDown size={40} />}
+          title="Profit/Loss"
+          value={`৳ ${(stats.profitLoss)}`}
+          color={stats.profitLoss >= 0 ? "from-green-500 to-emerald-600" : "from-red-500 to-rose-600"}
         />
       </div>
 

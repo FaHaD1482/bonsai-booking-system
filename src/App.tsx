@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
+import Expense from './pages/Expense';
 import ProtectedRoute from './pages/ProtectedRoute';
 import useAuth from './hooks/useAuth';
 import { Loader } from 'lucide-react';
@@ -31,6 +32,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Bookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute>
+                <Expense />
               </ProtectedRoute>
             }
           />

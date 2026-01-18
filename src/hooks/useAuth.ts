@@ -11,24 +11,43 @@ const useAuth = () => {
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
+        let isMounted = true;
+
         const checkAuth = async () => {
             try {
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-                
-                if (user) {
-                    setUser({
-                        id: user.id,
-                        email: user.email || '',
-                        user_metadata: user.user_metadata,
-                    });
-                    setIsAdmin(user.email === ADMIN_EMAIL);
+                // Set a timeout to prevent infinite loading
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+                );
+
+                const authPromise = supabase.auth.getUser();
+                const { data: { user }, error } = await Promise.race([
+                    authPromise,
+                    timeoutPromise
+                ]) as any;
+
+                if (isMounted) {
+                    if (error) {
+                        console.error('Auth error:', error);
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    if (user) {
+                        setUser({
+                            id: user.id,
+                            email: user.email || '',
+                            user_metadata: user.user_metadata,
+                        });
+                        setIsAdmin(user.email === ADMIN_EMAIL);
+                    }
+                    setLoading(false);
                 }
-                setLoading(false);
             } catch (err) {
                 console.error('Auth check failed:', err);
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
@@ -37,20 +56,23 @@ const useAuth = () => {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (_, session) => {
-            if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    user_metadata: session.user.user_metadata,
-                });
-                setIsAdmin(session.user.email === ADMIN_EMAIL);
-            } else {
-                setUser(null);
-                setIsAdmin(false);
+            if (isMounted) {
+                if (session?.user) {
+                    setUser({
+                        id: session.user.id,
+                        email: session.user.email || '',
+                        user_metadata: session.user.user_metadata,
+                    });
+                    setIsAdmin(session.user.email === ADMIN_EMAIL);
+                } else {
+                    setUser(null);
+                    setIsAdmin(false);
+                }
             }
         });
 
         return () => {
+            isMounted = false;
             subscription?.unsubscribe();
         };
     }, []);
