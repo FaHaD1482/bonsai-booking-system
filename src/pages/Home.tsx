@@ -138,16 +138,6 @@ const Home: React.FC = () => {
             </button>
           </form>
         </div>
-
-        {/* Security Notice */}
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-6">
-          <p className="font-semibold text-emerald-900 mb-3">🔒 Security Information</p>
-          <ul className="space-y-2 text-sm text-gray-700">
-            <li>✓ Admin access only</li>
-            <li>✓ Secure encryption</li>
-            <li>✓ Protected database</li>
-          </ul>
-        </div>
       </div>
     </div>
   );
