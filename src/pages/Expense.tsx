@@ -48,6 +48,7 @@ export default function ExpensePage() {
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       filtered = filtered.filter(e => {
+        // Filter expenses and revenue within the month
         const expDate = new Date(e.expense_date);
         return expDate >= firstDay && expDate <= lastDay;
       });
@@ -200,20 +201,33 @@ export default function ExpensePage() {
   // Calculate metrics
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   
-  const monthlyBookings = bookings.filter(b => {
+  // Filter bookings by date range (same as filteredExpenses)
+  let filteredBookings = bookings;
+  if (dateRange === 'monthly') {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const bookDate = new Date(b.created_at || new Date());
-    return bookDate >= firstDay;
-  });
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    filteredBookings = filteredBookings.filter(b => {
+      // Filter bookings within the month based on check_in (was created_at)
+      const bookDate = new Date(b.check_in || new Date());
+      return bookDate >= firstDay && bookDate <= lastDay;
+    });
+  } else if (dateRange === 'custom' && customStartDate && customEndDate) {
+    const startDate = new Date(customStartDate);
+    const endDate = new Date(customEndDate);
+    filteredBookings = filteredBookings.filter(b => {
+      const bookDate = new Date(b.check_in || new Date());
+      return bookDate >= startDate && bookDate <= endDate;
+    });
+  }
 
-  const totalRevenue = monthlyBookings.reduce((sum, b) => sum + (b.price || 0), 0);
-  const totalAdvance = monthlyBookings.reduce((sum, b) => sum + (b.advance || 0), 0);
-  const totalVAT = monthlyBookings.reduce((sum, b) => sum + (b.vat_amount || 0), 0);
-  const totalCheckoutPayable = monthlyBookings.reduce((sum, b) => sum + (b.checkout_payable || 0), 0);
-  const totalRefunds = monthlyBookings.reduce((sum, b) => sum + (b.refund_amount || 0), 0);
+  let totalRevenue = filteredBookings.reduce((sum, b) => sum + (b.revenue || 0), 0);
+  const totalAdvance = filteredBookings.reduce((sum, b) => sum + (b.advance || 0), 0);
+  const totalVAT = filteredBookings.reduce((sum, b) => sum + (b.vat_amount || 0), 0);
+  const totalCheckoutPayable = filteredBookings.reduce((sum, b) => sum + (b.checkout_payable || 0), 0);
+  const totalRefunds = filteredBookings.reduce((sum, b) => sum + (b.refund_amount || 0), 0);
 
-  const profitLoss = totalRevenue - totalExpenses - totalRefunds;
+  const profitLoss = totalRevenue - totalExpenses;
 
   // Pagination
   const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
@@ -258,7 +272,7 @@ export default function ExpensePage() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-emerald-100 text-sm font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold mt-2">${totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold mt-2">৳ {totalRevenue.toFixed(2)}</p>
             </div>
             <TrendingUp size={24} className="text-emerald-200" />
           </div>
@@ -269,7 +283,7 @@ export default function ExpensePage() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-rose-100 text-sm font-medium">Total Expenses</p>
-              <p className="text-2xl font-bold mt-2">${totalExpenses.toFixed(2)}</p>
+              <p className="text-2xl font-bold mt-2">৳ {totalExpenses.toFixed(2)}</p>
             </div>
             <TrendingDown size={24} className="text-rose-200" />
           </div>
@@ -280,7 +294,7 @@ export default function ExpensePage() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-amber-100 text-sm font-medium">Total VAT</p>
-              <p className="text-2xl font-bold mt-2">${totalVAT.toFixed(2)}</p>
+              <p className="text-2xl font-bold mt-2">৳ {totalVAT.toFixed(2)}</p>
             </div>
             <DollarSign size={24} className="text-amber-200" />
           </div>
@@ -291,7 +305,7 @@ export default function ExpensePage() {
           <div className="flex justify-between items-start">
             <div>
               <p className={`text-sm font-medium ${profitLoss >= 0 ? 'text-blue-100' : 'text-red-100'}`}>Profit/Loss</p>
-              <p className="text-2xl font-bold mt-2">${profitLoss.toFixed(2)}</p>
+              <p className="text-2xl font-bold mt-2">৳ {profitLoss.toFixed(2)}</p>
             </div>
             {profitLoss >= 0 ? <TrendingUp size={24} className="text-blue-200" /> : <TrendingDown size={24} className="text-red-200" />}
           </div>
@@ -302,15 +316,15 @@ export default function ExpensePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-lg p-4 shadow border-l-4 border-cyan-500">
           <p className="text-slate-600 text-sm">Total Advance</p>
-          <p className="text-xl font-bold text-slate-900">${totalAdvance.toFixed(2)}</p>
+          <p className="text-xl font-bold text-slate-900">৳ {totalAdvance.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow border-l-4 border-purple-500">
           <p className="text-slate-600 text-sm">Total Payable</p>
-          <p className="text-xl font-bold text-slate-900">${totalCheckoutPayable.toFixed(2)}</p>
+          <p className="text-xl font-bold text-slate-900">৳ {totalCheckoutPayable.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow border-l-4 border-orange-500">
           <p className="text-slate-600 text-sm">Total Refunds</p>
-          <p className="text-xl font-bold text-slate-900">${totalRefunds.toFixed(2)}</p>
+          <p className="text-xl font-bold text-slate-900">৳ {totalRefunds.toFixed(2)}</p>
         </div>
       </div>
 
@@ -462,7 +476,7 @@ export default function ExpensePage() {
 
             {/* Amount */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Amount ($)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Amount (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -613,7 +627,7 @@ export default function ExpensePage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-700">{expense.description}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-slate-900">
-                          ${Number(expense.amount).toFixed(2)}
+                          ৳ {Number(expense.amount).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600">{expense.payment_method}</td>
                         <td className="px-6 py-4 flex gap-2">

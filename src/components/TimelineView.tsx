@@ -4,19 +4,23 @@ import { Booking, Room } from '../types';
 import { formatDateDisplay } from '../utils/bookingUtils';
 import { Loader, Calendar, Users, DollarSign } from 'lucide-react';
 
-const TimelineView: React.FC = () => {
+interface TimelineViewProps {
+  refresh?: number;
+}
+
+const TimelineView: React.FC<TimelineViewProps> = ({ refresh }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refresh]);
 
   const fetchData = async () => {
     try {
       const [bookingsRes, roomsRes] = await Promise.all([
-        supabase.from('bookings').select('*').neq('status', 'Checked-out').order('check_in', { ascending: true }),
+        supabase.from('bookings').select('*').neq('status', 'Checked-out').neq('status', 'Cancelled').order('check_in', { ascending: true }),
         supabase.from('rooms').select('*').order('name', { ascending: true }),
       ]);
 

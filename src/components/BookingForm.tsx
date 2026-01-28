@@ -4,8 +4,9 @@ import { Booking, Room } from '../types';
 import { checkRoomConflict, formatDate } from '../utils/bookingUtils';
 import { calculateVAT, calculateTotalPrice, calculateCheckoutPayable, validatePhoneNumber, formatPhoneNumber, validateEmail } from '../utils/calculationUtils';
 import { generateWhatsAppMessage, sendWhatsAppMessage, copyToClipboard } from '../services/whatsappService';
-import { AlertCircle, CheckCircle, Loader, MessageCircle, Copy } from 'lucide-react';
+import { Loader, MessageCircle, Copy } from 'lucide-react';
 import RoomSelector from './RoomSelector';
+import { useModal } from '../hooks/useModal';
 
 interface BookingFormProps {
   onBookingAdded?: () => void;
@@ -35,11 +36,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
     checkout_payable: 0,
   });
 
-  const [status, setStatus] = useState<{
-    type: 'idle' | 'loading' | 'success' | 'error';
-    message: string;
-  }>({ type: 'idle', message: '' });
-
+  const [isLoading, setIsLoading] = useState(false);
+  const { showAlert } = useModal();
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -71,7 +69,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .neq('status', 'Checked-out');
+        .neq('status', 'Checked-out')
+        .neq('status', 'Cancelled');
 
       if (error) throw error;
       setBookings(data || []);
@@ -142,18 +141,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
     e.preventDefault();
     
     if (!validateForm()) {
-      setStatus({ type: 'error', message: 'Please fix the errors above' });
+      showAlert('Validation Error', 'Please fix the errors above', 'error');
       return;
     }
 
-    setStatus({ type: 'loading', message: 'Checking availability...' });
+    setIsLoading(true);
 
     try {
       // Validate dates
       const checkIn = new Date(formData.check_in);
       const checkOut = new Date(formData.check_out);
       if (checkIn >= checkOut) {
-        setStatus({ type: 'error', message: 'Check-out date must be after check-in date' });
+        showAlert('Invalid Dates', 'Check-out date must be after check-in date', 'error');
+        setIsLoading(false);
         return;
       }
 
@@ -187,16 +187,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
         guest_count: parseInt(formData.num_adults) || 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        revenue: parseFloat(formData.advance),
+        pending_amount: parseFloat(formData.price) - parseFloat(formData.advance),
       };
 
       const conflictCheck = checkRoomConflict(newBooking, latestBookings || []);
 
       if (conflictCheck.hasConflict && conflictCheck.conflictingBooking) {
         const conflicting = conflictCheck.conflictingBooking;
-        setStatus({
-          type: 'error',
-          message: `Room is already booked by ${conflicting.guest_name} from ${conflicting.check_in} to ${conflicting.check_out}`,
-        });
+        showAlert(
+          'Room Conflict',
+          `Room is already booked by ${conflicting.guest_name}\nFrom: ${conflicting.check_in}\nTo: ${conflicting.check_out}`,
+          'error'
+        );
+        setIsLoading(false);
         return;
       }
 
@@ -211,10 +215,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
       const createdBooking = insertedData?.[0];
       setSuccessBooking(createdBooking);
 
-      setStatus({
-        type: 'success',
-        message: 'Booking added successfully!',
-      });
+      showAlert(
+        'Booking Successful',
+        `${formData.guest_name} has been booked successfully!\n\nBooking No: ${formData.booking_no}\nAdvance: ৳${formData.advance}`,
+        'success'
+      );
 
       // Reset form
       setFormData({
@@ -240,10 +245,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
         onBookingAdded();
       }
 
-      setTimeout(() => setStatus({ type: 'idle', message: '' }), 5000);
+      setIsLoading(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add booking';
-      setStatus({ type: 'error', message });
+      showAlert('Booking Error', message, 'error');
+      setIsLoading(false);
     }
   };
 
@@ -252,23 +258,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
 
     const room = rooms.find((r) => r.id === successBooking.room_id);
     if (!room) {
-      setStatus({ type: 'error', message: 'Room not found' });
+      showAlert('Error', 'Room not found', 'error');
       return;
     }
 
-    setStatus({ type: 'loading', message: 'Sending WhatsApp message...' });
+    setIsLoading(true);
 
     try {
       const message = generateWhatsAppMessage(successBooking, room);
       const result = await sendWhatsAppMessage(successBooking.guest_phone, message);
 
       if (result.success) {
-        setStatus({ type: 'success', message: result.message });
+        showAlert('WhatsApp', result.message, 'success');
       } else {
-        setStatus({ type: 'error', message: result.message });
+        showAlert('WhatsApp Error', result.message, 'error');
       }
+      setIsLoading(false);
     } catch (err) {
-      setStatus({ type: 'error', message: 'Failed to send WhatsApp message' });
+      showAlert('WhatsApp Error', 'Failed to send WhatsApp message', 'error');
+      setIsLoading(false);
     }
   };
 
@@ -280,26 +288,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
 
     const message = generateWhatsAppMessage(successBooking, room);
     if (copyToClipboard(message)) {
-      setStatus({ type: 'success', message: 'Message copied to clipboard!' });
-      setTimeout(() => setStatus({ type: 'idle', message: '' }), 2000);
+      showAlert('Copied', 'Message copied to clipboard!', 'success');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      {status.message && (
-        <div className={`p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top duration-300 shadow-lg ${
-          status.type === 'error' ? 'bg-red-50 text-red-700 border-2 border-red-200' : 
-          status.type === 'success' ? 'bg-green-50 text-green-700 border-2 border-green-200' : 
-          'bg-blue-50 text-blue-700 border-2 border-blue-200'
-        }`}>
-          {status.type === 'error' && <AlertCircle size={20} className="flex-shrink-0" />}
-          {status.type === 'success' && <CheckCircle size={20} className="flex-shrink-0" />}
-          {status.type === 'loading' && <Loader size={20} className="animate-spin flex-shrink-0" />}
-          <span className="font-semibold">{status.message}</span>
-        </div>
-      )}
-
       {/* Guest Information Section */}
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-lg border border-emerald-200">
         <h3 className="text-lg font-bold text-emerald-900 mb-4">👤 Guest Information</h3>
@@ -569,16 +563,16 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
       <div className="space-y-3">
         <button
           type="submit"
-          disabled={status.type === 'loading'}
+          disabled={isLoading}
           className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-xl hover:scale-105 active:scale-95"
         >
-          {status.type === 'loading' ? (
+          {isLoading ? (
             <>
               <Loader size={18} className="animate-spin" />
               Processing...
             </>
           ) : (
-            '✅ Add Booking'
+            'Add Booking'
           )}
         </button>
 
@@ -588,11 +582,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
             <button
               type="button"
               onClick={handleSendWhatsApp}
-              disabled={status.type === 'loading'}
+              disabled={isLoading}
               className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg"
             >
               <MessageCircle size={18} />
-              📱 Send WhatsApp Confirmation
+              Send WhatsApp Confirmation
             </button>
             <button
               type="button"
@@ -600,7 +594,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg"
             >
               <Copy size={18} />
-              📋 Copy Message to Clipboard
+              Copy Message to Clipboard
             </button>
           </div>
         )}

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import supabase from '../services/supabaseClient';
-import { Booking, Expense } from '../types';
+import { Booking, Expense, DateRangeType } from '../types';
 import { Users, DollarSign, DoorOpen, Loader, TrendingUp, Calendar, TrendingDown } from 'lucide-react';
 
+interface StatisticsDashboardProps {
+  refresh?: number;
+}
 
-const StatisticsDashboard: React.FC = () => {
+const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) => {
   const [stats, setStats] = useState({
     totalBookings: 0,
     advanceCollected: 0,
@@ -24,7 +27,7 @@ const StatisticsDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchStats();
-  }, [dateRange, customStartDate, customEndDate]);
+  }, [dateRange, customStartDate, customEndDate, refresh]);
 
   const fetchStats = async () => {
     try {
@@ -94,9 +97,12 @@ const StatisticsDashboard: React.FC = () => {
       const totalCheckoutPayable = bookings.reduce((sum, b) => sum + (b.checkout_payable || 0), 0);
       const totalRefunds = bookings.reduce((sum, b) => sum + (b.refund_amount || 0), 0);
       
+      // Calculate total revenue from revenue column in database
+      const totalRevenue = bookings.reduce((sum, b) => sum + (b.revenue || 0), 0);
+      
       // Calculate total booking amount and pending
       const totalAmount = bookings.reduce((sum, b) => sum + (b.price || 0), 0);
-      const pendingPayment = Math.max(0, totalAmount - advanceCollected);
+      const pendingPayment = bookings.reduce((sum, b) => sum + (b.pending_amount || 0), 0);
 
       // Calculate total expenses
       const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
@@ -120,10 +126,9 @@ const StatisticsDashboard: React.FC = () => {
       });
 
       // Calculate profit/loss
-      const totalRevenue = totalAmount;
-      const profitLoss = totalRevenue - totalExpenses - totalRefunds;
+      const profitLoss = totalRevenue;
 
-      console.log('📈 Statistics calculated:', { totalBookings, advanceCollected, activeRooms, pendingPayment, totalVAT, totalRefunds, totalExpenses, profitLoss });
+      console.log('📈 Statistics calculated:', { totalBookings, advanceCollected, activeRooms, pendingPayment, totalVAT, totalRefunds, totalExpenses, profitLoss, totalRevenue });
 
       setStats({
         totalBookings,

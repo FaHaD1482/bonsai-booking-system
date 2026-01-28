@@ -10,7 +10,11 @@ interface RoomForm {
   type: string;
 }
 
-const RoomManager: React.FC = () => {
+interface RoomManagerProps {
+  refresh?: number;
+}
+
+const RoomManager: React.FC<RoomManagerProps> = ({ refresh }) => {
   const { isAdmin } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -29,7 +33,7 @@ const RoomManager: React.FC = () => {
 
   useEffect(() => {
     fetchRooms();
-  }, []);
+  }, [refresh]);
 
   const fetchRooms = async () => {
     try {

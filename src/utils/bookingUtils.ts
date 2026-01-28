@@ -10,8 +10,8 @@ export const checkRoomConflict = (
   const newCheckOut = new Date(check_out).getTime();
 
   for (const booking of existingBookings) {
-    // Skip if booking is already checked out or in a final status
-    if (booking.status === 'Checked-out') {
+    // Skip if booking is cancelled or already checked out - they don't block availability
+    if (booking.status === 'Checked-out' || booking.status === 'Cancelled') {
       continue;
     }
 

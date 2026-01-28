@@ -15,8 +15,11 @@ export interface Booking {
   vat_amount: number;
   checkout_payable: number;
   refund_amount: number;
+  pending_amount: number;
+  revenue: number;
   custom_refund_amount?: number; // For custom refund negotiations
   remarks?: string;
+  notes?: string;
   guest_count?: number;
   num_adults?: number;
   status: "Confirmed" | "Checked-out" | "Cancelled" | "Paid";

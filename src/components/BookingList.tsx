@@ -3,17 +3,20 @@ import supabase from '../services/supabaseClient';
 import { Booking, DateRangeType } from '../types';
 import { formatDateDisplay } from '../utils/bookingUtils';
 import { calculateRefund } from '../utils/calculationUtils';
-import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight, Edit2, X, Save } from 'lucide-react';
+import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useModal } from '../hooks/useModal';
+import Modal from './Modal';
 
 interface BookingWithRoom extends Booking {
   room_name?: string;
 }
 
 interface BookingListProps {
-  refresh?: boolean;
+  refresh?: boolean | number;
+  onActionComplete?: () => void;
 }
 
-const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
+const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) => {
   const [allBookings, setAllBookings] = useState<BookingWithRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +27,9 @@ const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
   const [customEndDate, setCustomEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Booking>>({});
   const [refundPolicyBooking, setRefundPolicyBooking] = useState<Booking | null>(null);
   const [customRefundAmount, setCustomRefundAmount] = useState('');
+  const { modal, showAlert, showConfirm, handleOk, handleCancel } = useModal();
 
   useEffect(() => {
     fetchBookings();
@@ -89,16 +91,23 @@ const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this booking?')) return;
-
-    try {
-      const { error } = await supabase.from('bookings').delete().eq('id', id);
-      if (error) throw error;
-      await fetchBookings();
-    } catch (err) {
-      console.error('Delete error:', err);
-      alert('Failed to delete booking');
-    }
+    showConfirm(
+      'Delete Booking',
+      'Are you sure you want to delete this booking? This action cannot be undone.',
+      async () => {
+        try {
+          const { error } = await supabase.from('bookings').delete().eq('id', id);
+          if (error) throw error;
+          showAlert('Success', 'Booking deleted successfully', 'success', () => {
+            fetchBookings();
+            onActionComplete?.();
+          });
+        } catch (err) {
+          console.error('Delete error:', err);
+          showAlert('Error', 'Failed to delete booking', 'error');
+        }
+      }
+    );
   };
 
   const handleCancelBooking = async (booking: Booking) => {
@@ -122,63 +131,90 @@ const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
         refundPolicy = 'Custom refund - Based on negotiation';
       }
 
-      // Update booking with cancellation
+      // Calculate new values
+      const newPendingAmount = 0; // No pending payment for cancelled bookings
+      const newRevenue = refundPolicyBooking.advance - refundAmount;
+      const advanceCollected = refundPolicyBooking.advance - refundAmount;
+
+      // When cancelling, checkout_payable becomes 0 (no checkout will happen)
+      // The refund_amount tracks what we owe back to the guest
       const { error } = await supabase
         .from('bookings')
         .update({
           status: 'Cancelled',
           refund_amount: refundAmount,
+          checkout_payable: 0,
+          pending_amount: newPendingAmount,
+          revenue: newRevenue,
+          advance: advanceCollected,
+          vat_amount: 0,
           updated_at: new Date().toISOString(),
         })
         .eq('id', refundPolicyBooking.id);
 
       if (error) throw error;
 
-      alert(`Booking cancelled. Refund: ৳${refundAmount.toFixed(2)}\nPolicy: ${refundPolicy}`);
-      setRefundPolicyBooking(null);
-      setCustomRefundAmount('');
-      await fetchBookings();
+      showAlert(
+        'Booking Cancelled',
+        `Refund Amount: ৳${refundAmount.toFixed(2)}\n\nPolicy: ${refundPolicy}\n\nRevenue: ৳${newRevenue.toFixed(2)}`,
+        'success',
+        () => {
+          setRefundPolicyBooking(null);
+          setCustomRefundAmount('');
+          fetchBookings();
+          onActionComplete?.();
+        }
+      );
     } catch (err) {
-      alert('Failed to process refund');
       console.error(err);
+      showAlert('Error', 'Failed to process refund', 'error');
     }
   };
 
-  const startEdit = (booking: Booking) => {
-    setEditingId(booking.id);
-    setEditData({ ...booking });
+  const handleCheckout = async (booking: Booking) => {
+    showConfirm(
+      'Confirm Checkout',
+      `Guest: ${booking.guest_name}\nPayment Due: ৳${booking.checkout_payable.toLocaleString()}\n\nProceed with checkout?`,
+      async () => {
+        try {
+          // Calculate new values
+          const newAdvance = booking.price; // Advance = full price at checkout
+          const newPendingAmount = 0; // After checkout, nothing is pending
+          // Revenue = previous revenue + checkout_payable (remaining amount collected at checkout)
+          const newRevenue = booking.revenue + booking.checkout_payable;
+
+          const { error } = await supabase
+            .from('bookings')
+            .update({
+              status: 'Checked-out',
+              advance: newAdvance,
+              checkout_payable: 0,
+              pending_amount: newPendingAmount,
+              revenue: newRevenue,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', booking.id);
+
+          if (error) throw error;
+
+          showAlert(
+            'Checkout Successful',
+            `Payment Received: ৳${booking.checkout_payable.toLocaleString()}\n\nTotal Revenue: ৳${newRevenue.toFixed(2)}`,
+            'success',
+            () => {
+              fetchBookings();
+              onActionComplete?.();
+            }
+          );
+        } catch (err) {
+          console.error('Checkout error:', err);
+          showAlert('Error', 'Failed to check out: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
+        }
+      }
+    );
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const saveEdit = async () => {
-    if (!editingId) return;
-
-    try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          status: editData.status,
-          remarks: editData.remarks,
-          check_in_time: editData.check_in_time,
-          check_out_time: editData.check_out_time,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', editingId);
-
-      if (error) throw error;
-
-      alert('Booking updated successfully');
-      cancelEdit();
-      await fetchBookings();
-    } catch (err) {
-      alert('Failed to update booking');
-      console.error(err);
-    }
-  };
+  // Edit functionality removed as requested
 
   // Filter bookings
   const filteredBookings = allBookings.filter((booking) => {
@@ -399,53 +435,35 @@ const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
                   <td className="px-3 py-3 text-right font-semibold text-gray-900">৳{booking.price.toLocaleString()}</td>
                   <td className="px-3 py-3 text-right font-semibold text-emerald-600">৳{booking.checkout_payable.toLocaleString()}</td>
                   <td className="px-3 py-3 text-center">
-                    {editingId === booking.id ? (
-                      <select
-                        value={editData.status || booking.status}
-                        onChange={(e) => setEditData({ ...editData, status: e.target.value as any })}
-                        className="px-2 py-1 text-xs rounded border border-gray-300"
-                      >
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Paid">Paid</option>
-                        <option value="Checked-out">Checked-out</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    ) : (
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        booking.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
-                        booking.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'Checked-out' ? 'bg-purple-100 text-purple-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {booking.status}
-                      </span>
-                    )}
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                      booking.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
+                      booking.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                      booking.status === 'Checked-out' ? 'bg-purple-100 text-purple-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {booking.status}
+                    </span>
                   </td>
                   <td className="px-3 py-3 text-center space-x-1 flex justify-center">
-                    {editingId === booking.id ? (
+                    {booking.status === 'Confirmed' && (
                       <>
-                        <button onClick={saveEdit} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Save">
-                          <Save size={14} />
+                        <button onClick={() => handleCheckout(booking)} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Checkout">
+                          ✓
                         </button>
-                        <button onClick={cancelEdit} className="p-1 bg-gray-400 hover:bg-gray-500 text-white rounded" title="Cancel">
-                          <X size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => startEdit(booking)} className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded" title="Edit">
-                          <Edit2 size={14} />
-                        </button>
-                        {booking.status !== 'Cancelled' && (
-                          <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-orange-500 hover:bg-orange-600 text-white rounded" title="Cancel & Refund">
-                            💰
-                          </button>
-                        )}
-                        <button onClick={() => handleDelete(booking.id)} className="p-1 bg-red-500 hover:bg-red-600 text-white rounded" title="Delete">
-                          <Trash2 size={14} />
+                        <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-orange-500 hover:bg-orange-600 text-white rounded" title="Cancel & Refund">
+                          💰
                         </button>
                       </>
                     )}
+                    {booking.status === 'Cancelled' && (
+                      <span className="text-xs text-gray-500">No actions</span>
+                    )}
+                    {booking.status === 'Checked-out' && (
+                      <span className="text-xs text-gray-500">Completed</span>
+                    )}
+                    <button onClick={() => handleDelete(booking.id)} className="p-1 bg-red-500 hover:bg-red-600 text-white rounded" title="Delete">
+                      <Trash2 size={14} />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -485,6 +503,19 @@ const BookingList: React.FC<BookingListProps> = ({ refresh }) => {
           Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredBookings.length)} of {filteredBookings.length}
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        showCancel={modal.showCancel}
+        okText={modal.okText}
+        cancelText={modal.cancelText}
+      />
     </div>
   );
 };

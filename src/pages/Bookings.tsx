@@ -7,10 +7,10 @@ import RoomManager from '../components/RoomManager';
 import { BarChart3, Plus } from 'lucide-react';
 
 const Bookings: React.FC = () => {
-  const [refresh, setRefresh] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleBookingAdded = () => {
-    setRefresh(!refresh);
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -22,22 +22,22 @@ const Bookings: React.FC = () => {
       </div>
 
       {/* Statistics Dashboard */}
-      <section>
+      <section key={`stats-${refreshKey}`}>
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Key Metrics</h2>
         </div>
-        <StatisticsDashboard />
+        <StatisticsDashboard refresh={refreshKey} />
       </section>
 
       {/* Room Occupancy Timeline */}
-      <section>
-        <TimelineView />
+      <section key={`timeline-${refreshKey}`}>
+        <TimelineView refresh={refreshKey} />
       </section>
 
       {/* Room Management */}
-      <section>
-        <RoomManager />
+      <section key={`rooms-${refreshKey}`}>
+        <RoomManager refresh={refreshKey} />
       </section>
 
       {/* Add Booking Form */}
@@ -55,7 +55,7 @@ const Bookings: React.FC = () => {
         {/* All Bookings List */}
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">All Bookings</h2>
-          <BookingList refresh={refresh} />
+          <BookingList refresh={refreshKey} onActionComplete={handleBookingAdded} />
         </div>
       </section>
     </div>
