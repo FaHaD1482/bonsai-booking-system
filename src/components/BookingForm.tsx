@@ -26,6 +26,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
     price: '',
     advance: '',
     vat_applicable: false,
+    vat_adjustment: '',
     remarks: '',
     num_adults: '1',
   });
@@ -53,16 +54,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
   useEffect(() => {
     const price = parseFloat(formData.price) || 0;
     const vat = Math.ceil(calculateVAT(price, formData.vat_applicable));
-    const total = calculateTotalPrice(price, vat);
+    const adjustment = parseFloat(formData.vat_adjustment) || 0;
+    const adjustedVAT = vat + adjustment;
+    const total = calculateTotalPrice(price, adjustedVAT);
     const advance = parseFloat(formData.advance) || 0;
     const payable = calculateCheckoutPayable(total, advance);
 
     setCalculatedValues({
-      vat_amount: vat,
+      vat_amount: adjustedVAT,
       total_price: total,
       checkout_payable: payable,
     });
-  }, [formData.price, formData.vat_applicable, formData.advance]);
+  }, [formData.price, formData.vat_applicable, formData.vat_adjustment, formData.advance]);
 
   const fetchBookings = async () => {
     try {
@@ -235,6 +238,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
         price: '',
         advance: '',
         vat_applicable: false,
+        vat_adjustment: '',
         remarks: '',
         num_adults: '1',
       });
@@ -525,6 +529,24 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               <span className="font-semibold text-gray-700">Apply VAT (2.5%)?</span>
             </label>
           </div>
+
+          {formData.vat_applicable && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                VAT Adjustment (৳) - Add or Subtract to Round VAT
+              </label>
+              <input
+                type="number"
+                name="vat_adjustment"
+                value={formData.vat_adjustment}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-orange-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-200 transition-all"
+                placeholder="e.g., +2 or -1"
+                step="0.01"
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter positive to add or negative to subtract from the calculated VAT amount</p>
+            </div>
+          )}
 
           {/* Display calculated values */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-lg border border-orange-200">
