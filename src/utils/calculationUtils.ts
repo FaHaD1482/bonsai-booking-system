@@ -19,6 +19,40 @@ export const calculateCheckoutPayable = (
   return Math.round((totalPrice - advance) * 100) / 100;
 };
 
+// Calculate multi-room booking totals
+// roomBookings: Array of {room_id, check_in_date, check_out_date, price_per_night, vat}
+export const calculateMultiRoomTotal = (
+  roomBookings: any[],
+  vatApplicable: boolean,
+  vatAdjustment: number = 0
+): { total_price: number; vat_amount: number } => {
+  let totalPrice = 0;
+  let totalVAT = 0;
+
+  for (const rb of roomBookings) {
+    const pricePerNight = parseFloat(rb.price_per_night) || 0;
+    const checkIn = new Date(rb.check_in_date);
+    const checkOut = new Date(rb.check_out_date);
+    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const roomTotal = pricePerNight * nights;
+    totalPrice += roomTotal;
+
+    if (vatApplicable) {
+      const roomVAT = Math.ceil(roomTotal * 0.025 * 100) / 100;
+      totalVAT += roomVAT;
+    }
+  }
+
+  totalVAT = Math.ceil(totalVAT * 100) / 100 + vatAdjustment;
+  const finalTotal = Math.ceil((totalPrice + totalVAT) * 100) / 100;
+
+  return {
+    total_price: finalTotal,
+    vat_amount: totalVAT,
+  };
+};
+
 // Calculate refund based on cancellation policy
 export const calculateRefund = (
   bookingPrice: number,

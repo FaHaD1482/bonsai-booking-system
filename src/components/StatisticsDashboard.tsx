@@ -19,27 +19,31 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
     totalExpenses: 0,
     profitLoss: 0,
     monthlyBookings: Array(12).fill(0),
+    monthLabels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   });
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRangeType>('month');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRangeType>('month');
+  const [appliedCustomStartDate, setAppliedCustomStartDate] = useState('');
+  const [appliedCustomEndDate, setAppliedCustomEndDate] = useState('');
 
   useEffect(() => {
     fetchStats();
-  }, [dateRange, customStartDate, customEndDate, refresh]);
+  }, [appliedDateRange, appliedCustomStartDate, appliedCustomEndDate, refresh]);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
       console.log('📊 Fetching statistics...');
       
-      // Determine date range
+      // Determine date range using applied values
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
 
-      if (dateRange === 'week') {
+      if (appliedDateRange === 'week') {
         // Current week (Friday to Thursday)
         const day = now.getDay();
         const daysBackToFriday = (day - 5 + 7) % 7;
@@ -47,23 +51,23 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
         startDate.setDate(startDate.getDate() - daysBackToFriday);
         endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 6); // Friday to next Thursday
-      } else if (dateRange === 'month') {
+      } else if (appliedDateRange === 'month') {
         // Current month (1st to last day)
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      } else if (dateRange === 'custom') {
-        if (customStartDate && customEndDate) {
-          startDate = new Date(customStartDate);
-          endDate = new Date(customEndDate);
+      } else if (appliedDateRange === 'custom') {
+        if (appliedCustomStartDate && appliedCustomEndDate) {
+          startDate = new Date(appliedCustomStartDate);
+          endDate = new Date(appliedCustomEndDate);
         }
       }
 
       console.log('📅 Date range:', startDate.toISOString().split('T')[0], 'to', endDate.toISOString().split('T')[0]);
 
-      // Fetch bookings
+      // Fetch bookings with booking_rooms (for multi-room bookings)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('*')
+        .select('*, booking_rooms(*)')
         .gte('check_in', startDate.toISOString().split('T')[0])
         .lte('check_in', endDate.toISOString().split('T')[0]);
 
@@ -108,22 +112,64 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
       const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
       // Count rooms with active bookings (check-in <= now <= check-out)
-      const activeRooms = new Set(
-        bookings
-          .filter((b) => {
-            const checkIn = new Date(b.check_in);
-            const checkOut = new Date(b.check_out);
-            return checkIn <= currentNow && currentNow < checkOut;
-          })
-          .map((b) => b.room_id)
-      ).size;
+      // For single-room bookings, count room_id; for multi-room, fetch from booking_rooms
+      const activeRoomIds = new Set<string>();
+      
+      for (const b of bookings) {
+        const checkIn = new Date(b.check_in);
+        const checkOut = new Date(b.check_out);
+        
+        if (checkIn <= currentNow && currentNow < checkOut) {
+          // Booking is currently active
+          if (b.room_id) {
+            // Single-room booking
+            activeRoomIds.add(b.room_id);
+          } else if (b.booking_rooms && b.booking_rooms.length > 0) {
+            // Multi-room booking - add all room IDs
+            for (const br of b.booking_rooms) {
+              activeRoomIds.add(br.room_id);
+            }
+          }
+        }
+      }
+      
+      const activeRooms = activeRoomIds.size;
 
-      // Count bookings by month
-      const monthlyData = Array(12).fill(0);
-      bookings.forEach((b) => {
-        const checkInDate = new Date(b.check_in);
-        monthlyData[checkInDate.getMonth()]++;
-      });
+      // Define month labels
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Count bookings by month (only within the selected date range)
+      let monthlyData: number[] = [];
+      let monthLabelsForRange: string[] = [];
+
+      if (appliedDateRange === 'custom' && appliedCustomStartDate && appliedCustomEndDate) {
+        // For custom range, only show months within the range
+        const startDate = new Date(appliedCustomStartDate);
+        const endDate = new Date(appliedCustomEndDate);
+        const currentDate = new Date(startDate);
+
+        while (currentDate <= endDate) {
+          const monthIndex = monthLabels.indexOf(monthLabels[currentDate.getMonth()]);
+          monthLabelsForRange.push(`${monthLabels[currentDate.getMonth()]} ${currentDate.getFullYear()}`);
+          
+          const monthCount = bookings.filter((b) => {
+            const checkInDate = new Date(b.check_in);
+            return checkInDate.getMonth() === currentDate.getMonth() && 
+                   checkInDate.getFullYear() === currentDate.getFullYear();
+          }).length;
+          
+          monthlyData.push(monthCount);
+          currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+      } else {
+        // For week/month views, show all 12 months
+        monthLabelsForRange = monthLabels;
+        monthlyData = Array(12).fill(0);
+        bookings.forEach((b) => {
+          const checkInDate = new Date(b.check_in);
+          monthlyData[checkInDate.getMonth()]++;
+        });
+      }
 
       // Calculate profit/loss
       const profitLoss = totalRevenue;
@@ -141,6 +187,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
         totalExpenses,
         profitLoss,
         monthlyBookings: monthlyData,
+        monthLabels: monthLabelsForRange,
       });
     } catch (err) {
       console.error('❌ Error fetching stats:', err);
@@ -183,8 +230,6 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
     </div>
   );
 
-  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -207,8 +252,11 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
               key={range}
               onClick={() => {
                 setDateRange(range);
+                setAppliedDateRange(range);
                 setCustomStartDate('');
                 setCustomEndDate('');
+                setAppliedCustomStartDate('');
+                setAppliedCustomEndDate('');
               }}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 dateRange === range
@@ -251,6 +299,18 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
               />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setAppliedDateRange('custom');
+                  setAppliedCustomStartDate(customStartDate);
+                  setAppliedCustomEndDate(customEndDate);
+                }}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
+              >
+                Apply
+              </button>
             </div>
           </div>
         )}
@@ -319,7 +379,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
           Monthly Booking Trends (Target: 200 bookings)
         </h3>
         <div className="space-y-4">
-          {monthLabels.map((month, index) => {
+          {stats.monthLabels.map((month, index) => {
             const bookingCount = stats.monthlyBookings[index];
             const targetBookings = 200;
             const percentage = Math.min((bookingCount / targetBookings) * 100, 100);

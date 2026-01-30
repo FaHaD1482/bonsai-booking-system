@@ -64,22 +64,50 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
         }
       }
 
-      // Fetch bookings with room names
+      // Fetch bookings with room names and booking_rooms data for multi-room bookings
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('*, rooms(name)')
+        .select('*, booking_rooms(*)')
         .gte('check_in', startDate.toISOString().split('T')[0])
         .lte('check_in', endDate.toISOString().split('T')[0])
         .order('check_in', { ascending: false });
 
       if (bookingsError) throw bookingsError;
       
-      const bookingsWithRooms = (bookingsData || []).map((booking: any) => ({
-        ...booking,
-        room_name: booking.rooms?.name || 'Unknown Room',
-      }));
+      // For single-room bookings, fetch room names; for multi-room, use booking_rooms data
+      let processedBookings = [];
+      
+      for (const booking of (bookingsData || [])) {
+        let room_name = 'Multi-Room Booking';
+        
+        // If single-room booking (has room_id), fetch room name
+        if (booking.room_id) {
+          const { data: roomData } = await supabase
+            .from('rooms')
+            .select('name')
+            .eq('id', booking.room_id)
+            .single();
+          room_name = roomData?.name || 'Unknown Room';
+        } else if (booking.booking_rooms && booking.booking_rooms.length > 0) {
+          // Multi-room booking
+          const roomIds = booking.booking_rooms.map((br: any) => br.room_id);
+          const { data: roomsData } = await supabase
+            .from('rooms')
+            .select('id, name')
+            .in('id', roomIds);
+          
+          if (roomsData && roomsData.length > 0) {
+            room_name = roomsData.map(r => r.name).join(', ');
+          }
+        }
+        
+        processedBookings.push({
+          ...booking,
+          room_name,
+        });
+      }
 
-      setAllBookings(bookingsWithRooms);
+      setAllBookings(processedBookings);
       setCurrentPage(1);
       setError(null);
     } catch (err) {
@@ -96,6 +124,10 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
       'Are you sure you want to delete this booking? This action cannot be undone.',
       async () => {
         try {
+          // Delete booking_rooms entries first (if any)
+          await supabase.from('booking_rooms').delete().eq('booking_id', id);
+          
+          // Then delete the booking itself
           const { error } = await supabase.from('bookings').delete().eq('id', id);
           if (error) throw error;
           showAlert('Success', 'Booking deleted successfully', 'success', () => {
@@ -450,8 +482,8 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
                         <button onClick={() => handleCheckout(booking)} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Checkout">
                           ✓
                         </button>
-                        <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-orange-500 hover:bg-orange-600 text-white rounded" title="Cancel & Refund">
-                          💰
+                        <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded" title="Cancel & Refund">
+                          ↪️
                         </button>
                       </>
                     )}

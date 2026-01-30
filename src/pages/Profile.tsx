@@ -67,13 +67,6 @@ const Profile: React.FC = () => {
 
                 <div className="form-control">
                   <label className="label cursor-pointer">
-                    <span className="label-text">Auto-sync to Google Sheets</span>
-                    <input type="checkbox" className="checkbox" defaultChecked />
-                  </label>
-                </div>
-
-                <div className="form-control">
-                  <label className="label cursor-pointer">
                     <span className="label-text">Email Notifications</span>
                     <input type="checkbox" className="checkbox" defaultChecked />
                   </label>

@@ -1,10 +1,25 @@
+export interface BookingRoom {
+  id: string;
+  booking_id: string;
+  room_id: string;
+  room_name?: string; // Populated when joined with rooms table
+  check_in_date: string;
+  check_out_date: string;
+  number_of_nights: number;
+  price_per_night: number;
+  total_price: number;
+  vat: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Booking {
   id: string;
   guest_name: string;
   guest_phone: string;
   guest_email?: string;
   booking_no: string;
-  room_id: string;
+  room_id?: string; // Deprecated for multi-room bookings, kept for backward compatibility
   check_in: string;
   check_out: string;
   check_in_time: string;
@@ -25,6 +40,9 @@ export interface Booking {
   status: "Confirmed" | "Checked-out" | "Cancelled" | "Paid";
   created_at: string;
   updated_at: string;
+  total_rooms?: number; // Number of rooms in this booking (1 for single, >1 for multi-room)
+  rooms?: BookingRoom[]; // Array of room bookings in multi-room bookings
+  booking_rooms?: BookingRoom[]; // Same as rooms, from Supabase query result
 }
 
 export interface Expense {

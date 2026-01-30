@@ -1,6 +1,6 @@
-import { Booking, Room } from '../types';
+import { Booking, BookingRoom, Room } from '../types';
 
-export const generateWhatsAppMessage = (booking: Booking, room: Room): string => {
+export const generateWhatsAppMessage = (booking: Booking, rooms: Room[]): string => {
   const checkInDate = new Date(booking.check_in).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'long',
@@ -16,6 +16,38 @@ export const generateWhatsAppMessage = (booking: Booking, room: Room): string =>
   const totalAmount = booking.price + booking.vat_amount;
   const payableOnArrival = booking.checkout_payable;
 
+  // Build room details section
+  let roomDetailsSection = '';
+  
+  if (booking.rooms && booking.rooms.length > 0) {
+    // Multi-room booking
+    roomDetailsSection = '*ROOM BOOKINGS*\n';
+    booking.rooms.forEach((bookingRoom: BookingRoom, idx: number) => {
+      const room = rooms.find(r => r.id === bookingRoom.room_id);
+      const roomName = room?.name || `Room ${idx + 1}`;
+      const roomCheckIn = new Date(bookingRoom.check_in_date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      const roomCheckOut = new Date(bookingRoom.check_out_date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      const nights = bookingRoom.number_of_nights;
+      const pricePerNight = bookingRoom.price_per_night;
+      const totalRoomPrice = bookingRoom.total_price;
+      
+      roomDetailsSection += `\n${idx + 1}. ${roomName}\n   Check-In: ${roomCheckIn}\n   Check-Out: ${roomCheckOut}\n   Duration: ${nights} night(s)\n   Price/Night: BDT ${pricePerNight.toFixed(2)}\n   Total: BDT ${totalRoomPrice.toFixed(2)}`;
+    });
+    roomDetailsSection += '\n\n';
+  } else if (booking.room_id) {
+    // Single-room booking
+    const room = rooms.find(r => r.id === booking.room_id);
+    roomDetailsSection = `*STAY DETAILS*\nRoom: ${room?.name || 'Standard Room'}\n\n`;
+  }
+
   const message = `Dear ${booking.guest_name},
 
 Greetings from Bonsai Eco Village 🌿  
@@ -30,13 +62,14 @@ Email: ${booking.guest_email || 'N/A'}
 
 ---
 
+${roomDetailsSection}
+
 *STAY DETAILS*
 Check-In Date: ${checkInDate}  
 Check-Out Date: ${checkOutDate}  
 Check-In Time: ${booking.check_in_time || '2:00 PM'}  
 Check-Out Time: ${booking.check_out_time || '12:00 PM'}  
 
-Room: ${room.name}  
 Number of Adults: ${booking.num_adults || booking.guest_count || 1}  
 Booking Reference: ${booking.booking_no}  
 

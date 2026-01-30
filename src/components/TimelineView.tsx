@@ -20,7 +20,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ refresh }) => {
   const fetchData = async () => {
     try {
       const [bookingsRes, roomsRes] = await Promise.all([
-        supabase.from('bookings').select('*').neq('status', 'Checked-out').neq('status', 'Cancelled').order('check_in', { ascending: true }),
+        supabase.from('bookings').select('*, booking_rooms(*)').neq('status', 'Checked-out').neq('status', 'Cancelled').order('check_in', { ascending: true }),
         supabase.from('rooms').select('*').order('name', { ascending: true }),
       ]);
 
@@ -36,10 +36,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ refresh }) => {
     }
   };
 
-  // Group bookings by room
+  // Group bookings by room (including multi-room bookings from booking_rooms table)
   const groupedByRoom = rooms.reduce(
     (acc, room) => {
-      acc[room.id] = bookings.filter((b) => b.room_id === room.id);
+      acc[room.id] = bookings.filter((b) => {
+        // Single-room booking
+        if (b.room_id === room.id) return true;
+        // Multi-room booking - check booking_rooms
+        if (b.booking_rooms && b.booking_rooms.length > 0) {
+          return b.booking_rooms.some((br: any) => br.room_id === room.id);
+        }
+        return false;
+      });
       return acc;
     },
     {} as Record<string, Booking[]>
