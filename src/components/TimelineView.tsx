@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import supabase from '../services/supabaseClient';
 import { Booking, Room } from '../types';
 import { formatDateDisplay } from '../utils/bookingUtils';
-import { Loader, Calendar, Users, DollarSign } from 'lucide-react';
+import { Loader, Calendar, Users, DollarSign, FileText } from 'lucide-react';
 
 interface TimelineViewProps {
   refresh?: number;
@@ -119,6 +119,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ refresh }) => {
                     const nights = Math.ceil(
                       (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
                     );
+                    const remarks = booking.remarks ? booking.remarks : 'No remarks';
 
                     return (
                       <div
@@ -130,10 +131,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ refresh }) => {
                             <p className="font-bold text-sm leading-tight">{booking.guest_name}</p>
                             <p className="text-xs opacity-90 mt-1 flex items-center gap-1">
                               <Calendar size={12} />
-                              {nights}n
+                              {nights} night(s) | {formatDateDisplay(booking.check_in)} - {formatDateDisplay(booking.check_out)}
                             </p>
-                            <p className="text-xs opacity-90 flex items-center gap-1 mt-0.5">
-                              {formatDateDisplay(booking.check_in)}
+                            <p className="text-xs opacity-90 mt-1 flex items-center gap-1">
+                              <FileText size={12} />
+                              {remarks}
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
