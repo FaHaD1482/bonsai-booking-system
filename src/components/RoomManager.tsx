@@ -225,7 +225,7 @@ const RoomManager: React.FC<RoomManagerProps> = ({ refresh }) => {
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="btn btn-sm btn-emerald gap-2"
+              className="btn btn-sm btn-emerald gap-1"
             >
               <Plus size={18} />
               Add New Room

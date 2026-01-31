@@ -460,12 +460,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+    <form onSubmit={handleSubmit} className="p-0 space-y-4 sm:space-y-6">
       {/* Booking Type Toggle */}
-      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-        <h3 className="text-lg font-bold text-purple-900 mb-4">📋 Booking Type</h3>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-lg transition-all" style={{borderColor: bookingType === 'single' ? '#10b981' : '#d1d5db', backgroundColor: bookingType === 'single' ? '#ecfdf5' : 'transparent'}}>
+      <div className="bg-purple-50 p-3 sm:p-4 rounded-lg border border-purple-200">
+        <h3 className="text-base sm:text-lg font-bold text-purple-900 mb-3 sm:mb-4">📋 Booking Type</h3>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <label className="flex items-center gap-2 cursor-pointer p-2 sm:p-3 border-2 rounded-lg transition-all flex-1" style={{borderColor: bookingType === 'single' ? '#10b981' : '#d1d5db', backgroundColor: bookingType === 'single' ? '#ecfdf5' : 'transparent'}}>
             <input
               type="radio"
               name="bookingType"
@@ -477,9 +477,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               }}
               className="w-4 h-4 cursor-pointer"
             />
-            <span className="font-semibold text-gray-700">Single Room</span>
+            <span className="font-semibold text-sm sm:text-base text-gray-700">Single Room</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-lg transition-all" style={{borderColor: bookingType === 'multi' ? '#10b981' : '#d1d5db', backgroundColor: bookingType === 'multi' ? '#ecfdf5' : 'transparent'}}>
+          <label className="flex items-center gap-2 cursor-pointer p-2 sm:p-3 border-2 rounded-lg transition-all flex-1" style={{borderColor: bookingType === 'multi' ? '#10b981' : '#d1d5db', backgroundColor: bookingType === 'multi' ? '#ecfdf5' : 'transparent'}}>
             <input
               type="radio"
               name="bookingType"
@@ -488,18 +488,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               onChange={(e) => setBookingType('multi')}
               className="w-4 h-4 cursor-pointer"
             />
-            <span className="font-semibold text-gray-700">Multiple Rooms</span>
+            <span className="font-semibold text-sm sm:text-base text-gray-700">Multiple Rooms</span>
           </label>
         </div>
       </div>
 
       {/* Guest Information Section */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-lg border border-emerald-200">
-        <h3 className="text-lg font-bold text-emerald-900 mb-4">👤 Guest Information</h3>
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 sm:p-4 rounded-lg border border-emerald-200">
+        <h3 className="text-base sm:text-lg font-bold text-emerald-900 mb-3 sm:mb-4">👤 Guest Information</h3>
         
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
               Guest Name * {formErrors.guest_name && <span className="text-red-500 text-xs">{formErrors.guest_name}</span>}
             </label>
             <input
@@ -507,7 +507,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               name="guest_name"
               value={formData.guest_name}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+              className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                 formErrors.guest_name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-200'
               }`}
               placeholder="e.g., John Doe"
@@ -515,9 +515,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                 Phone Number * {formErrors.guest_phone && <span className="text-red-500 text-xs">{formErrors.guest_phone}</span>}
               </label>
               <input
@@ -525,7 +525,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                 name="guest_phone"
                 value={formData.guest_phone}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                   formErrors.guest_phone ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-200'
                 }`}
                 placeholder="e.g., +8801XX XXXXXX"
@@ -534,7 +534,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                 Email {formErrors.guest_email && <span className="text-red-500 text-xs">{formErrors.guest_email}</span>}
               </label>
               <input
@@ -542,7 +542,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                 name="guest_email"
                 value={formData.guest_email}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                   formErrors.guest_email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-200'
                 }`}
                 placeholder="e.g., guest@email.com (Optional)"
@@ -551,7 +551,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
               Booking Number * {formErrors.booking_no && <span className="text-red-500 text-xs">{formErrors.booking_no}</span>}
             </label>
             <input
@@ -559,7 +559,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               name="booking_no"
               value={formData.booking_no}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+              className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                 formErrors.booking_no ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-200'
               }`}
               placeholder="e.g., BK202601001"
@@ -568,7 +568,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
               Number of Adults *
             </label>
             <input
@@ -576,7 +576,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               name="num_adults"
               value={formData.num_adults}
               onChange={handleChange}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition-all"
+              className="w-full px-2 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition-all text-sm"
               placeholder="e.g., 2"
               min="1"
               max="20"
@@ -586,14 +586,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
       </div>
 
       {/* Room & Dates Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
-        <h3 className="text-lg font-bold text-blue-900 mb-4">🏠 Room & Dates</h3>
+      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 sm:p-4 rounded-lg border border-blue-200">
+        <h3 className="text-base sm:text-lg font-bold text-blue-900 mb-3 sm:mb-4">🏠 Room & Dates</h3>
         
         {bookingType === 'single' ? (
           // SINGLE ROOM BOOKING UI
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                 Room * {formErrors.room_id && <span className="text-red-500 text-xs">{formErrors.room_id}</span>}
               </label>
               <RoomSelector
@@ -607,9 +607,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Check-in Date * {formErrors.check_in && <span className="text-red-500 text-xs">{formErrors.check_in}</span>}
                 </label>
                 <input
@@ -617,7 +617,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="check_in"
                   value={formData.check_in}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                  className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                     formErrors.check_in ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
                   }`}
                   required
@@ -625,7 +625,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Check-in Time
                 </label>
                 <input
@@ -633,14 +633,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="check_in_time"
                   value={formData.check_in_time}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all text-sm"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Check-out Date * {formErrors.check_out && <span className="text-red-500 text-xs">{formErrors.check_out}</span>}
                 </label>
                 <input
@@ -648,7 +648,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="check_out"
                   value={formData.check_out}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                  className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                     formErrors.check_out ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
                   }`}
                   required
@@ -656,7 +656,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Check-out Time
                 </label>
                 <input
@@ -664,17 +664,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="check_out_time"
                   value={formData.check_out_time}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all text-sm"
                 />
               </div>
             </div>
           </div>
         ) : (
           // MULTI-ROOM BOOKING UI
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Overall Check-in Date * {formErrors.check_in && <span className="text-red-500 text-xs">{formErrors.check_in}</span>}
                 </label>
                 <input
@@ -682,7 +682,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="check_in"
                   value={formData.check_in}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                  className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                     formErrors.check_in ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
                   }`}
                   required
@@ -690,7 +690,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Overall Check-out Date * {formErrors.check_out && <span className="text-red-500 text-xs">{formErrors.check_out}</span>}
                 </label>
                 <input
@@ -800,14 +800,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
         )}
       </div>
       {/* Pricing Section */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
-        <h3 className="text-lg font-bold text-orange-900 mb-4">💰 Pricing Details</h3>
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 sm:p-4 rounded-lg border border-orange-200">
+        <h3 className="text-base sm:text-lg font-bold text-orange-900 mb-3 sm:mb-4">💰 Pricing Details</h3>
         
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
           {bookingType === 'single' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                   Base Price (৳) * {formErrors.price && <span className="text-red-500 text-xs">{formErrors.price}</span>}
                 </label>
                 <input
@@ -815,7 +815,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                   name="price"
                   value={formData.price}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+                  className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                     formErrors.price ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-orange-500 focus:ring-orange-200'
                   }`}
                   placeholder="e.g., 5000"
@@ -827,7 +827,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
               Advance (৳) * {formErrors.advance && <span className="text-red-500 text-xs">{formErrors.advance}</span>}
             </label>
             <input
@@ -835,7 +835,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               name="advance"
               value={formData.advance}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all ${
+              className={`w-full px-2 sm:px-4 py-2 sm:py-3 border-2 rounded-lg focus:outline-none focus:ring-4 transition-all text-sm ${
                 formErrors.advance ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-orange-500 focus:ring-orange-200'
               }`}
               placeholder="e.g., 2000"
@@ -845,21 +845,21 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
           </div>
 
           <div>
-            <label className="flex items-center gap-3 p-3 border-2 border-orange-300 rounded-lg hover:bg-orange-50 cursor-pointer">
+            <label className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border-2 border-orange-300 rounded-lg hover:bg-orange-50 cursor-pointer">
               <input
                 type="checkbox"
                 name="vat_applicable"
                 checked={formData.vat_applicable}
                 onChange={handleChange}
-                className="w-5 h-5 cursor-pointer"
+                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer"
               />
-              <span className="font-semibold text-gray-700">Apply VAT (2.5%)?</span>
+              <span className="font-semibold text-xs sm:text-base text-gray-700">Apply VAT (2.5%)?</span>
             </label>
           </div>
 
           {formData.vat_applicable && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                 VAT Adjustment (৳) - Add or Subtract to Round VAT
               </label>
               <input
@@ -867,7 +867,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
                 name="vat_adjustment"
                 value={formData.vat_adjustment}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-orange-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-200 transition-all"
+                className="w-full px-2 sm:px-4 py-2 sm:py-3 border-2 border-orange-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-200 transition-all text-sm"
                 placeholder="e.g., +2 or -1"
                 step="0.01"
               />
@@ -876,18 +876,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
           )}
 
           {/* Display calculated values */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-lg border border-orange-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 bg-white p-2 sm:p-4 rounded-lg border border-orange-200">
             <div>
               <p className="text-xs text-gray-600 font-semibold">VAT Amount</p>
-              <p className="text-lg font-bold text-orange-600">৳ {calculatedValues.vat_amount.toFixed(2)}</p>
+              <p className="text-base sm:text-lg font-bold text-orange-600">৳ {calculatedValues.vat_amount.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">Total Price</p>
-              <p className="text-lg font-bold text-orange-600">৳ {calculatedValues.total_price.toFixed(2)}</p>
+              <p className="text-base sm:text-lg font-bold text-orange-600">৳ {calculatedValues.total_price.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">Payable on Arrival</p>
-              <p className="text-lg font-bold text-emerald-600">৳ {calculatedValues.checkout_payable.toFixed(2)}</p>
+              <p className="text-base sm:text-lg font-bold text-emerald-600">৳ {calculatedValues.checkout_payable.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -895,25 +895,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
 
       {/* Remarks Section */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
           📝 Remarks & Special Requests
         </label>
         <textarea
           name="remarks"
           value={formData.remarks}
           onChange={handleChange}
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition-all hover:border-emerald-300 placeholder-gray-400"
+          className="w-full px-2 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition-all hover:border-emerald-300 placeholder-gray-400 text-sm"
           placeholder="e.g., Extra bed, Late checkout, Special amenities, etc."
           rows={3}
         />
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-xl hover:scale-105 active:scale-95"
+          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-bold py-2 sm:py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-xl hover:scale-105 active:scale-95 text-sm sm:text-base"
         >
           {isLoading ? (
             <>
@@ -932,7 +932,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
               type="button"
               onClick={handleSendWhatsApp}
               disabled={isLoading}
-              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg"
+              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg text-sm sm:text-base"
             >
               <MessageCircle size={18} />
               Send WhatsApp Confirmation
@@ -940,7 +940,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ onBookingAdded }) => {
             <button
               type="button"
               onClick={handleCopyMessage}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-lg text-sm sm:text-base"
             >
               <Copy size={18} />
               Copy Message to Clipboard

@@ -14,18 +14,18 @@ const Bookings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 px-3 sm:px-6">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8 px-2 sm:px-4 md:px-6">
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 sm:p-8 border border-emerald-200">
-        <img src="/assets/bonsai.png" alt="Bonsai Eco Village" className="mx-auto mb-4 w-25 h-20" />
-        <h1 className="text-xl sm:text-4xl font-bold text-emerald-900 mb-2 text-center">Room Booking Portal</h1>
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 sm:p-6 md:p-8 border border-emerald-200">
+        <img src="/assets/bonsai.png" alt="Bonsai Eco Village" className="mx-auto mb-3 sm:mb-4 w-24 h-16 sm:w-28 sm:h-20" />
+        <h1 className="text-lg sm:text-2xl md:text-4xl font-bold text-emerald-900 mb-2 text-center">Room Booking Portal</h1>
       </div>
 
       {/* Statistics Dashboard */}
       <section key={`stats-${refreshKey}`}>
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Key Metrics</h2>
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <BarChart3 className="text-emerald-600 flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-gray-800">Key Metrics</h2>
         </div>
         <StatisticsDashboard refresh={refreshKey} />
       </section>
@@ -41,20 +41,20 @@ const Bookings: React.FC = () => {
       </section>
 
       {/* Add Booking Form */}
-      <section className="space-y-6 sm:space-y-8">
+      <section className="space-y-4 sm:space-y-6 md:space-y-8">
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="text-emerald-600 flex-shrink-0" size={24} />
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Create New Booking</h2>
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <Plus className="text-emerald-600 flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6" size={24} />
+            <h2 className="text-base sm:text-xl md:text-2xl font-bold text-gray-800">Create New Booking</h2>
           </div>
-          <div className="bg-white rounded-lg shadow-lg border border-emerald-100 p-6 sm:p-8">
+          <div className="bg-white rounded-lg shadow-lg border border-emerald-100 p-3 sm:p-6 md:p-8">
             <BookingForm onBookingAdded={handleBookingAdded} />
           </div>
         </div>
 
         {/* All Bookings List */}
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">All Bookings</h2>
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">All Bookings</h2>
           <BookingList refresh={refreshKey} onActionComplete={handleBookingAdded} />
         </div>
       </section>

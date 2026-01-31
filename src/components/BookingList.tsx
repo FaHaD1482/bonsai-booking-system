@@ -3,7 +3,7 @@ import supabase from '../services/supabaseClient';
 import { Booking, DateRangeType } from '../types';
 import { formatDateDisplay } from '../utils/bookingUtils';
 import { calculateRefund } from '../utils/calculationUtils';
-import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import Modal from './Modal';
 
@@ -246,8 +246,6 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
     );
   };
 
-  // Edit functionality removed as requested
-
   // Filter bookings
   const filteredBookings = allBookings.filter((booking) => {
     const matchesSearch =
@@ -258,6 +256,53 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
     const matchesStatus = statusFilter === 'All' || booking.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // CSV Export function
+  const downloadCSV = () => {
+    if (filteredBookings.length === 0) {
+      showAlert('No Data', 'No bookings to download', 'alert');
+      return;
+    }
+
+    // Define CSV headers
+    const headers = ['Booking #', 'Guest Name', 'Phone', 'Email', 'Room', 'Check-in', 'Check-out', 'Remarks', 'Price', 'VAT', 'Payable', 'Status', 'Created Date'];
+
+    // Map booking data to CSV rows
+    const rows = filteredBookings.map((booking) => [
+      booking.booking_no || '',
+      booking.guest_name || '',
+      booking.guest_phone || '',
+      booking.guest_email || '',
+      booking.room_name || '',
+      formatDateDisplay(booking.check_in),
+      formatDateDisplay(booking.check_out),
+      booking.remarks || '',
+      booking.price.toLocaleString(),
+      booking.vat_amount.toLocaleString(),
+      booking.checkout_payable.toLocaleString(),
+      booking.status || '',
+      new Date(booking.created_at).toLocaleDateString(),
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `booking-data-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showAlert('Success', 'Booking data downloaded successfully!', 'success');
+  };
 
   // Pagination
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
@@ -316,6 +361,15 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
               }`}
             >
               Custom Range
+            </button>
+            <button
+              onClick={downloadCSV}
+              className="ml-auto px-4 py-2 rounded-lg font-medium transition bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              title="Download booking data as CSV"
+            >
+              <Download size={16} />
+              <span className="hidden sm:inline">Download CSV</span>
+              <span className="sm:hidden">CSV</span>
             </button>
           </div>
         </div>
@@ -428,80 +482,90 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
-              <th className="px-3 py-3 text-left font-semibold text-gray-700">Booking #</th>
-              <th className="px-3 py-3 text-left font-semibold text-gray-700">Guest</th>
-              <th className="px-3 py-3 text-left font-semibold text-gray-700">Phone</th>
-              <th className="px-3 py-3 text-left font-semibold text-gray-700">Room</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-700">Check-in</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-700">Check-out</th>
-              <th className="px-3 py-3 text-right font-semibold text-gray-700">Price</th>
-              <th className="px-3 py-3 text-right font-semibold text-gray-700">Payable</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-700">Status</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedBookings.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="text-center py-8 text-gray-500">
-                  No bookings found
-                </td>
+      <div className="overflow-x-auto -mx-6 sm:mx-0">
+        <div className="sm:mx-0">
+          <table className="w-full text-xs sm:text-sm">
+            <thead>
+              <tr className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
+                <th className="px-2 sm:px-3 py-3 text-left font-semibold text-gray-700 min-w-max">Booking #</th>
+                <th className="px-2 sm:px-3 py-3 text-left font-semibold text-gray-700 min-w-max">Guest</th>
+                <th className="px-2 sm:px-3 py-3 text-left font-semibold text-gray-700 min-w-max">Phone</th>
+                <th className="px-2 sm:px-3 py-3 text-left font-semibold text-gray-700 min-w-max">Room</th>
+                <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Check-in</th>
+                <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Check-out</th>
+                <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Remarks</th>
+                <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Price</th>
+                <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">VAT</th>
+                <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Payable</th>
+                <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Status</th>
+                <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Actions</th>
               </tr>
-            ) : (
-              paginatedBookings.map((booking, index) => (
-                <tr key={booking.id} className={`border-b border-gray-200 hover:bg-emerald-50 transition ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                  <td className="px-3 py-3 font-mono text-xs text-gray-600">{booking.booking_no}</td>
-                  <td className="px-3 py-3 font-semibold text-gray-900">{booking.guest_name}</td>
-                  <td className="px-3 py-3 text-xs text-gray-600">{booking.guest_phone}</td>
-                  <td className="px-3 py-3">
-                    <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-bold">
-                      {booking.room_name}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-center text-xs text-gray-700">{formatDateDisplay(booking.check_in)}</td>
-                  <td className="px-3 py-3 text-center text-xs text-gray-700">{formatDateDisplay(booking.check_out)}</td>
-                  <td className="px-3 py-3 text-right font-semibold text-gray-900">৳{booking.price.toLocaleString()}</td>
-                  <td className="px-3 py-3 text-right font-semibold text-emerald-600">৳{booking.checkout_payable.toLocaleString()}</td>
-                  <td className="px-3 py-3 text-center">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                      booking.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
-                      booking.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                      booking.status === 'Checked-out' ? 'bg-purple-100 text-purple-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-center space-x-1 flex justify-center">
-                    {booking.status === 'Confirmed' && (
-                      <>
-                        <button onClick={() => handleCheckout(booking)} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Checkout">
-                          ✓
-                        </button>
-                        <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded" title="Cancel & Refund">
-                          ↪️
-                        </button>
-                      </>
-                    )}
-                    {booking.status === 'Cancelled' && (
-                      <span className="text-xs text-gray-500">No actions</span>
-                    )}
-                    {booking.status === 'Checked-out' && (
-                      <span className="text-xs text-gray-500">Completed</span>
-                    )}
-                    <button onClick={() => handleDelete(booking.id)} className="p-1 bg-red-500 hover:bg-red-600 text-white rounded" title="Delete">
-                      <Trash2 size={14} />
-                    </button>
+            </thead>
+            <tbody>
+              {paginatedBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="text-center py-8 text-gray-500">
+                    No bookings found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                paginatedBookings.map((booking, index) => (
+                  <tr key={booking.id} className={`border-b border-gray-200 hover:bg-emerald-50 transition ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                    <td className="px-2 sm:px-3 py-3 font-mono text-xs text-gray-600 min-w-max">{booking.booking_no}</td>
+                    <td className="px-2 sm:px-3 py-3 font-semibold text-gray-900 min-w-max">{booking.guest_name}</td>
+                    <td className="px-2 sm:px-3 py-3 text-xs text-gray-600 min-w-max">{booking.guest_phone}</td>
+                    <td className="px-2 sm:px-3 py-3 min-w-max">
+                      <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">
+                        {booking.room_name}
+                      </span>
+                    </td>
+                    <td className="px-2 sm:px-3 py-3 text-center text-xs text-gray-700 min-w-max">{formatDateDisplay(booking.check_in)}</td>
+                    <td className="px-2 sm:px-3 py-3 text-center text-xs text-gray-700 min-w-max">{formatDateDisplay(booking.check_out)}</td>
+                    {/* Remarks */}
+                    <td className="px-2 sm:px-3 py-3 text-center text-xs text-gray-700 min-w-max max-w-xs truncate" title={booking.remarks}>{booking.remarks || '-'}</td>
+                    <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900 min-w-max">৳{booking.price.toLocaleString()}</td>
+                    {/* VAT */}
+                    <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900 min-w-max">৳{booking.vat_amount.toLocaleString()}</td>
+                    <td className="px-2 sm:px-3 py-3 text-right font-semibold text-emerald-600 min-w-max">৳{booking.checkout_payable.toLocaleString()}</td>
+                    <td className="px-2 sm:px-3 py-3 text-center min-w-max">
+                      <span className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
+                        booking.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                        booking.status === 'Checked-out' ? 'bg-purple-100 text-purple-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {booking.status}
+                      </span>
+                    </td>
+                    <td className="px-2 sm:px-3 py-3 text-center min-w-max">
+                      <div className="space-x-1 flex justify-center">
+                        {booking.status === 'Confirmed' && (
+                          <>
+                            <button onClick={() => handleCheckout(booking)} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Checkout">
+                              ✓
+                            </button>
+                            <button onClick={() => handleCancelBooking(booking)} className="p-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded" title="Cancel & Refund">
+                              ↪️
+                            </button>
+                          </>
+                        )}
+                        {booking.status === 'Cancelled' && (
+                          <span className="text-xs text-gray-500 whitespace-nowrap">No actions</span>
+                        )}
+                        {booking.status === 'Checked-out' && (
+                          <span className="text-xs text-gray-500 whitespace-nowrap">Completed</span>
+                        )}
+                        <button onClick={() => handleDelete(booking.id)} className="p-1 bg-red-500 hover:bg-red-600 text-white rounded" title="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination & Footer */}
