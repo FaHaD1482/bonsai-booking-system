@@ -70,7 +70,7 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
         .select('*, booking_rooms(*)')
         .gte('check_in', startDate.toISOString().split('T')[0])
         .lte('check_in', endDate.toISOString().split('T')[0])
-        .order('check_in', { ascending: false });
+        .order('check_in', { ascending: true });
 
       if (bookingsError) throw bookingsError;
       

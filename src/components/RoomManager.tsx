@@ -220,7 +220,7 @@ const RoomManager: React.FC<RoomManagerProps> = ({ refresh }) => {
       <div className="card-body">
         <div className="flex items-center justify-between mb-6">
           <h2 className="card-title text-2xl font-bold text-emerald-700 flex items-center gap-2">
-            <span>🏠</span> Room Management
+            <span>🏠</span> Rooms
           </h2>
           {!showForm && (
             <button
