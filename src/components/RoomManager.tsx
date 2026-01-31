@@ -228,7 +228,7 @@ const RoomManager: React.FC<RoomManagerProps> = ({ refresh }) => {
               className="btn btn-sm btn-emerald gap-1"
             >
               <Plus size={18} />
-              Add New Room
+              Add Room
             </button>
           )}
         </div>
