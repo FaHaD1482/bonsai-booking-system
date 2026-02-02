@@ -29,6 +29,9 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
   const [itemsPerPage] = useState(10);
   const [refundPolicyBooking, setRefundPolicyBooking] = useState<Booking | null>(null);
   const [customRefundAmount, setCustomRefundAmount] = useState('');
+  const [checkoutBooking, setCheckoutBooking] = useState<Booking | null>(null);
+  const [extraIncome, setExtraIncome] = useState('0');
+  const [discount, setDiscount] = useState('0');
   const { modal, showAlert, showConfirm, handleOk, handleCancel } = useModal();
 
   useEffect(() => {
@@ -204,46 +207,53 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
   };
 
   const handleCheckout = async (booking: Booking) => {
-    showConfirm(
-      'Confirm Checkout',
-      `Guest: ${booking.guest_name}\nPayment Due: ৳${booking.checkout_payable.toLocaleString()}\n\nProceed with checkout?`,
-      async () => {
-        try {
-          // Calculate new values
-          const newAdvance = booking.price; // Advance = full price at checkout
-          const newPendingAmount = 0; // After checkout, nothing is pending
-          // Revenue = previous revenue + checkout_payable (remaining amount collected at checkout)
-          const newRevenue = booking.revenue + booking.checkout_payable;
+    setCheckoutBooking(booking);
+    setExtraIncome('0');
+    setDiscount('0');
+  };
 
-          const { error } = await supabase
-            .from('bookings')
-            .update({
-              status: 'Checked-out',
-              advance: newAdvance,
-              checkout_payable: 0,
-              pending_amount: newPendingAmount,
-              revenue: newRevenue,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', booking.id);
+  const confirmCheckout = async () => {
+    if (!checkoutBooking) return;
 
-          if (error) throw error;
+    try {
+      const extraIncomeAmount = parseFloat(extraIncome) || 0;
+      const discountAmount = parseFloat(discount) || 0;
 
-          showAlert(
-            'Checkout Successful',
-            `Payment Received: ৳${booking.checkout_payable.toLocaleString()}\n\nTotal Revenue: ৳${newRevenue.toFixed(2)}`,
-            'success',
-            () => {
-              fetchBookings();
-              onActionComplete?.();
-            }
-          );
-        } catch (err) {
-          console.error('Checkout error:', err);
-          showAlert('Error', 'Failed to check out: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
+      // Calculate new values
+      const totalPrice = checkoutBooking.price + checkoutBooking.vat_amount;
+      const finalCheckoutPayable = (totalPrice - checkoutBooking.advance + extraIncomeAmount - discountAmount);
+      const newRevenue = checkoutBooking.revenue + finalCheckoutPayable;
+
+      const { error } = await supabase
+        .from('bookings')
+        .update({
+          status: 'Checked-out',
+          advance: checkoutBooking.price,
+          checkout_payable: 0,
+          pending_amount: 0,
+          extra_income: extraIncomeAmount,
+          discount: discountAmount,
+          revenue: newRevenue,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', checkoutBooking.id);
+
+      if (error) throw error;
+
+      showAlert(
+        'Checkout Successful',
+        `Payment Received: ৳${finalCheckoutPayable.toLocaleString()}\n\nExtra Income: ৳${extraIncomeAmount.toLocaleString()}\nDiscount: ৳${discountAmount.toLocaleString()}\n\nTotal Revenue: ৳${newRevenue.toFixed(2)}`,
+        'success',
+        () => {
+          setCheckoutBooking(null);
+          fetchBookings();
+          onActionComplete?.();
         }
-      }
-    );
+      );
+    } catch (err) {
+      console.error('Checkout error:', err);
+      showAlert('Error', 'Failed to check out: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
+    }
   };
 
   // Filter bookings
@@ -265,7 +275,7 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
     }
 
     // Define CSV headers
-    const headers = ['Booking #', 'Guest Name', 'Phone', 'Email', 'Room', 'Check-in', 'Check-out', 'Remarks', 'Price', 'VAT', 'Payable', 'Status', 'Created Date'];
+    const headers = ['Booking #', 'Guest Name', 'Phone', 'Email', 'Room', 'Check-in', 'Check-out', 'Remarks', 'Price', 'VAT',  'Payable', 'Extra Income', 'Discount', 'Status', 'Created Date'];
 
     // Map booking data to CSV rows
     const rows = filteredBookings.map((booking) => [
@@ -280,6 +290,8 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
       booking.price.toLocaleString(),
       booking.vat_amount.toLocaleString(),
       booking.checkout_payable.toLocaleString(),
+      booking.extra_income.toLocaleString(),
+      booking.discount.toLocaleString(),
       booking.status || '',
       new Date(booking.created_at).toLocaleDateString(),
     ]);
@@ -496,6 +508,8 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
                 <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Remarks</th>
                 <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Price</th>
                 <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">VAT</th>
+                <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Extra Income</th>
+                <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Discount</th>
                 <th className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-700 min-w-max">Payable</th>
                 <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Status</th>
                 <th className="px-2 sm:px-3 py-3 text-center font-semibold text-gray-700 min-w-max">Actions</th>
@@ -526,6 +540,8 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
                     <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900 min-w-max">৳{booking.price.toLocaleString()}</td>
                     {/* VAT */}
                     <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900 min-w-max">৳{booking.vat_amount.toLocaleString()}</td>
+                    <td className="px-2 sm:px-3 py-3 text-right font-semibold text-emerald-600 min-w-max">৳{booking.extra_income.toLocaleString()}</td>
+                    <td className="px-2 sm:px-3 py-3 text-right font-semibold text-red-600 min-w-max">৳{booking.discount.toLocaleString()}</td>
                     <td className="px-2 sm:px-3 py-3 text-right font-semibold text-emerald-600 min-w-max">৳{booking.checkout_payable.toLocaleString()}</td>
                     <td className="px-2 sm:px-3 py-3 text-center min-w-max">
                       <span className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
@@ -599,6 +615,102 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
           Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredBookings.length)} of {filteredBookings.length}
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      {checkoutBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-lg">
+              <h2 className="text-xl font-bold text-white">Checkout Confirmation</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Booking Details */}
+              <div className="border-b pb-4">
+                <p className="text-sm text-gray-600">Guest Name</p>
+                <p className="text-lg font-semibold text-gray-800">{checkoutBooking.guest_name}</p>
+              </div>
+
+              {/* Base Amount */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Room Price:</span>
+                  <span className="font-semibold">৳{checkoutBooking.price.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">VAT (2.5%):</span>
+                  <span className="font-semibold">৳{checkoutBooking.vat_amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Advance Paid:</span>
+                  <span className="font-semibold text-blue-600">-৳{checkoutBooking.advance.toLocaleString()}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between">
+                  <span className="text-gray-700">Base Amount Due:</span>
+                  <span className="font-bold text-lg">৳{(checkoutBooking.price + checkoutBooking.vat_amount - checkoutBooking.advance).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Extra Income Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Extra Income <span className="text-xs text-gray-500">(Additional amount from guest)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={extraIncome}
+                  onChange={(e) => setExtraIncome(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Discount Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Discount <span className="text-xs text-gray-500">(Amount to discount from guest)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Total Payable */}
+              <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-800">Total Amount Due:</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    ৳{(checkoutBooking.price + checkoutBooking.vat_amount - checkoutBooking.advance + parseFloat(extraIncome || '0') - parseFloat(discount || '0')).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setCheckoutBooking(null)}
+                  className="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmCheckout}
+                  className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition"
+                >
+                  Confirm Checkout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       <Modal

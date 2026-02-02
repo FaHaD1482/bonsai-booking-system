@@ -11,12 +11,14 @@ export const calculateTotalPrice = (price: number, vat: number): number => {
   return Math.ceil((price + vat) * 100) / 100;
 };
 
-// Checkout Payable = Total Price - Advance
+// Checkout Payable = Total Price - Advance + Extra Income - Discount
 export const calculateCheckoutPayable = (
   totalPrice: number,
-  advance: number
+  advance: number,
+  extraIncome: number = 0,
+  discount: number = 0
 ): number => {
-  return Math.round((totalPrice - advance) * 100) / 100;
+  return Math.round((totalPrice - advance + extraIncome - discount) * 100) / 100;
 };
 
 // Calculate multi-room booking totals
@@ -159,6 +161,15 @@ export const calculateNights = (checkIn: string, checkOut: string): number => {
     (check_out.getTime() - check_in.getTime()) / (1000 * 60 * 60 * 24)
   );
   return Math.max(nights, 1);
+};
+
+// Calculate total revenue with extra income and discount
+export const calculateTotalRevenue = (
+  totalPrice: number,
+  extraIncome: number = 0,
+  discount: number = 0
+): number => {
+  return Math.round((totalPrice + extraIncome - discount) * 100) / 100;
 };
 
 // Validate phone number format

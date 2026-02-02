@@ -32,6 +32,8 @@ export interface Booking {
   refund_amount: number;
   pending_amount: number;
   revenue: number;
+  extra_income: number; // Additional income collected at checkout
+  discount: number; // Discount given to guest at checkout
   custom_refund_amount?: number; // For custom refund negotiations
   remarks?: string;
   notes?: string;

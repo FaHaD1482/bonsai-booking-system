@@ -118,8 +118,9 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ refresh }) =>
       for (const b of bookings) {
         const checkIn = new Date(b.check_in);
         const checkOut = new Date(b.check_out);
+        const bookingStatus = b.status;
         
-        if (checkIn <= currentNow && currentNow < checkOut) {
+        if (checkIn <= currentNow && currentNow < checkOut && bookingStatus === 'Confirmed') {
           // Booking is currently active
           if (b.room_id) {
             // Single-room booking
