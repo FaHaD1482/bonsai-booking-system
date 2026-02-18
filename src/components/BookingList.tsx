@@ -3,7 +3,8 @@ import supabase from '../services/supabaseClient';
 import { Booking, DateRangeType } from '../types';
 import { formatDateDisplay } from '../utils/bookingUtils';
 import { calculateRefund } from '../utils/calculationUtils';
-import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { generateInvoicePDF } from '../utils/invoiceGenerator';
+import { Trash2, Loader, Calendar, ChevronLeft, ChevronRight, Download, FileText } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import Modal from './Modal';
 
@@ -253,6 +254,14 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
     } catch (err) {
       console.error('Checkout error:', err);
       showAlert('Error', 'Failed to check out: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
+    }
+  };
+
+  const handleDownloadInvoice = (booking: BookingWithRoom) => {
+    try {
+      generateInvoicePDF(booking, booking.room_name);
+    } catch (err) {
+      showAlert('Error', 'Failed to generate invoice: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
     }
   };
 
@@ -554,7 +563,7 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
                       </span>
                     </td>
                     <td className="px-2 sm:px-3 py-3 text-center min-w-max">
-                      <div className="space-x-1 flex justify-center">
+                      <div className="space-x-1 flex justify-center flex-wrap">
                         {booking.status === 'Confirmed' && (
                           <>
                             <button onClick={() => handleCheckout(booking)} className="p-1 bg-green-500 hover:bg-green-600 text-white rounded" title="Checkout">
@@ -569,7 +578,9 @@ const BookingList: React.FC<BookingListProps> = ({ refresh, onActionComplete }) 
                           <span className="text-xs text-gray-500 whitespace-nowrap">No actions</span>
                         )}
                         {booking.status === 'Checked-out' && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap">Completed</span>
+                          <button onClick={() => handleDownloadInvoice(booking)} className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded" title="Download Invoice">
+                            <FileText size={14} />
+                          </button>
                         )}
                         <button onClick={() => handleDelete(booking.id)} className="p-1 bg-red-500 hover:bg-red-600 text-white rounded" title="Delete">
                           <Trash2 size={14} />

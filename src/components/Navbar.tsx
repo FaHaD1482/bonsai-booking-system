@@ -14,16 +14,24 @@ const Navbar: React.FC = () => {
   return (
     <div className="navbar bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 shadow-2xl px-3 sm:px-6 backdrop-blur-md sticky top-0 z-50 transition-all duration-300">
       <div className="flex-1 min-w-0">
-        <Link
+        {/* <Link
           to="/"
-          className="btn btn-ghost normal-case text-lg sm:text-2xl font-bold text-white flex gap-2 items-center no-underline hover:no-underline focus:no-underline hover:scale-105 transition-transform duration-300"
+          className="btn btn-ghost hover:bg-transparent normal-case text-lg sm:text-2xl font-bold text-white flex gap-2 items-center no-underline hover:no-underline focus:no-underline hover:scale-105 transition-transform duration-300"
         >
           <img src={logo} alt="Bonsai Logo" className="h-12 w-16 sm:h-12 sm:w-18 flex-shrink-4 hover:rotate-12 transition-transform duration-300" />
           <span className="hidden sm:inline">Booking Portal</span>
           <span className="sm:hidden"> Booking Portal</span>
+        </Link> */}
+        <Link
+          to="/"
+          className="group flex gap-2 items-center text-white text-lg sm:text-2xl font-bold no-underline hover:no-underline focus:no-underline hover:scale-105 transition-transform duration-300"
+        >
+          <img src={logo} alt="Bonsai Logo" className="h-12 w-16 sm:h-12 sm:w-18 flex-shrink-0 group-hover:rotate-12 transition-transform duration-300"/>
+          <span className="hidden sm:inline">Booking Portal</span>
+          <span className="sm:hidden">Booking Portal</span>
         </Link>
       </div>
-      <div className="flex-none gap-3 sm:gap-5">
+      <div className="flex-none gap-3 sm:gap-5"> 
         {user && isAdmin ? (
           <>
             {/* Visit Resort Website Button - Hidden on mobile */}
